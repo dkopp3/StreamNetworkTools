@@ -4,6 +4,10 @@
 #'
 #' network scale values (i.e. mean) can be derived with \code{aggregate}
 #'
+#' warning message: In st_cast.sf(netdelin_Prj, "LINESTRING") : repeating
+#' attributes for all sub-geometries for which they may not be constant is from
+#' vpu 17 when changing MULTILINE to LINESTRING geometry
+#'
 #' @param netdelin output from \code{net_delin}
 #' @param vpu vector processing unit
 #' @param nhdplus_path directory containing NHDPlusV2 \code{\link{net_nhdplus}}
@@ -20,7 +24,6 @@
 #' j<-net_sinu(netdelin = c, vpu = "01", nhdplus_path = getwd())
 #' @export
 
-
 net_sinu <- function (netdelin, nhdplus_path, vpu){
   directory <- grep(paste(vpu, "/NHDPlusAttributes", sep = ""),
                     list.dirs(nhdplus_path, full.names = T),
@@ -33,12 +36,13 @@ net_sinu <- function (netdelin, nhdplus_path, vpu){
   names(slope) <- toupper(names(slope))
   netdelin_Prj <- sf::st_transform(netdelin$SF_Obj,
                                    crs = 5070)
-
   mimaslope <- slope[slope[,"COMID"] %in% netdelin_Prj$COMID,
                        c("COMID","MAXELEVSMO", "MINELEVSMO", "SLOPE")]
     names(mimaslope)<-c("COMID","MaxElevSM", "MinElevSM", "SlopeNHDPlus")
     tot.len <- sf::st_length(sf::st_geometry(netdelin_Prj))
-
+    # to ensure the input is linestring geometry -
+    # vpu 17 read in a multiline and caused error
+    netdelin_Prj<-sf::st_cast(netdelin_Prj,"LINESTRING")
     xy <- sf::st_coordinates(sf::st_geometry(netdelin_Prj))
     xy<-dplyr::group_by(data.frame(xy),L1)
     xy.min<-dplyr::slice(xy, which.min(M))
@@ -48,7 +52,7 @@ net_sinu <- function (netdelin, nhdplus_path, vpu){
     xy<-xy[order(xy[,"L1"]),]
     xy <- sf::st_as_sf(xy, coords = c(1,2))
     xy <- dplyr::group_by(xy, L1)
-    xy <- dplyr::summarize(xy, first(L1))
+    xy <- dplyr::summarize(xy, dplyr::first(L1))
     xy <- sf::st_cast(xy, "LINESTRING")
     xy <- sf::st_set_crs(xy, 5070)
     str.len <- sf::st_length(xy)

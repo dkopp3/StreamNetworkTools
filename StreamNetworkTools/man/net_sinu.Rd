@@ -27,6 +27,10 @@ Calculates sinuosity and slope for each network COMID
 }
 \details{
 network scale values (i.e. mean) can be derived with \code{aggregate}
+
+warning message: In st_cast.sf(netdelin_Prj, "LINESTRING") : repeating
+attributes for all sub-geometries for which they may not be constant is from
+vpu 17 when changing MULTILINE to LINESTRING geometry
 }
 \examples{
 j<-net_sinu(netdelin = c, vpu = "01", nhdplus_path = getwd())

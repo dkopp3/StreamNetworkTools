@@ -1,10 +1,12 @@
-#the TO and FROM are switiched ... need to create an error message
-#comids <- data.frame(path.id = c(1),
- #                    TOCOMID = c(4290117),
-  #                   FROMCOMID = c(4289983))
 #' @export
 
 net_posit <- function (nhdplus_path, vpu, comids){
+
+  #the TO and FROM are switiched ... need to create an error message
+  #comids <- data.frame(path.id = c(1),
+  #                     TOCOMID = c(4290117),
+  #                     FROMCOMID = c(4289983))
+
   directory <- grep(paste(vpu, "/NHDPlusAttributes", sep = ""),
                   list.dirs(nhdplus_path, full.names = T), value = T)
   #to/from comids
