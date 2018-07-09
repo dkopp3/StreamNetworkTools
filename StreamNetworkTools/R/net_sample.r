@@ -17,6 +17,7 @@
 #' @return vector of COMID's of specified Strahler order
 #' @examples
 #' net_sample(nhdplus_path=getwd(),vpu = "01", ws_order = 6, n = 5)
+#' @export
 
 net_sample <- function (nhdplus_path, vpu, ws_order, n){
   dir_vaa <- grep(paste( vpu, "/NHDPlusAttributes", sep = ""),

@@ -2,6 +2,7 @@
 #comids <- data.frame(path.id = c(1),
  #                    TOCOMID = c(4290117),
   #                   FROMCOMID = c(4289983))
+#' @export
 
 net_posit <- function (nhdplus_path, vpu, comids){
   directory <- grep(paste(vpu, "/NHDPlusAttributes", sep = ""),

@@ -23,6 +23,7 @@
 #'
 #' @examples
 #' net_hort(netdelin = c, vpu = "01", nhdplus_path = getwd())
+#' @export
 
 net_hort<-function ( netdelin, vpu, nhdplus_path){
 

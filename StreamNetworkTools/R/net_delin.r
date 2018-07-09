@@ -26,6 +26,7 @@
 #' a <- net_comid(sample_points = z, CRS = 4269, nhdplus_path = getwd(), vpu="01", maxdist = 100)
 #' b <- net_delin(group_comid = as.character(a[,"COMID"]), nhdplus_path = getwd(), vpu = "01")
 #' write_sf(b$SF_Obj...)
+#' @export
 
 net_delin <- function (group_comid, nhdplus_path, vpu) {
 

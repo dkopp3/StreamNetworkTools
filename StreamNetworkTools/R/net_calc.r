@@ -26,6 +26,8 @@
 #'
 #' @examples
 #' g <- net_calc(netdelin = c, vpu = "01", nhdplus_path = getwd())
+#'
+#' @export
 
 net_calc <- function(netdelin, vpu, nhdplus_path ){
   directory <- grep(paste(vpu, "/NHDPlusAttributes", sep = ""),

@@ -14,6 +14,7 @@
 #'
 #' @examples
 #' net_lc(netdelin = c, vpu = "01", nhdplus_path = getwd())
+#' @export
 
 net_lc<-function(netdelin, vpu, nhdplus_path){
   #set NLCD directory to read in cumalitive climate data (CumTotNLCD2011)

@@ -28,6 +28,7 @@
 #'
 #' @examples
 #' h <- net_conflu(netdelin = c, vpu = "01", nhdplus_path = getwd())
+#' @export
 
 net_conflu <- function (netdelin, nhdplus_path, vpu){
   directory <- grep(paste(vpu, "/NHDPlusAttributes", sep = ""),

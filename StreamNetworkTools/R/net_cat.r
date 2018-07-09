@@ -22,6 +22,7 @@
 #' @examples
 #' d <- net_cat(netdelin = c, vpu = "01", nhdplus_path = getwd(), dissolve = "Y")
 #' plot(st_geometry(d$sf_obj))
+#' @export
 
 net_cat <- function(netdelin, vpu, nhdplus_path, dissolve){
 

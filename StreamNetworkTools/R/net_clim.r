@@ -38,6 +38,7 @@
 #'
 #' @examples
 #' f <- net_clim(netdelin = c,vpu = "01", nhdplus_path = getwd())
+#' @export
 
 net_clim<-function(nhdplus_path, vpu, netdelin){
   full.net <- netdelin$Network

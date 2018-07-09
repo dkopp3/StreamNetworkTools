@@ -34,6 +34,7 @@
 #' net_nhdplus(nhdplus_path=getwd(), download = "http", vpu = "01", files =
 #' c("NHDPlusAttributes", "NHDSnapshot", "NHDPlusCatchment", "VPUAttributeExtension",
 #' "VogelExtension", "EROMExtension"), zip_7 = "C:/Program Files/7-Zip")
+#' @export
 
 net_nhdplus <- function (nhdplus_path=getwd(),
                          download = "http",

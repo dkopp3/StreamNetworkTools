@@ -18,6 +18,7 @@
 #'
 #' @examples
 #' j<-net_sinu(netdelin = c, vpu = "01", nhdplus_path = getwd())
+#' @export
 
 
 net_sinu <- function (netdelin, nhdplus_path, vpu){

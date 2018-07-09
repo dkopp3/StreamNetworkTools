@@ -23,6 +23,7 @@
 #' CRS examples: \code{CRS = 4269} = NAD83 (see
 #' \url{https://epsg.io/4269});\code{CRS = 5070} = NAD83/CONUS Albers (see
 #' \url{https://epsg.io/5070})
+#' @export
 
 net_comid <- function(sample_points, CRS, nhdplus_path, vpu, maxdist){
   dir.spatial <- grep(paste(vpu, "/NHDSnapshot/Hydrography", sep = ""),

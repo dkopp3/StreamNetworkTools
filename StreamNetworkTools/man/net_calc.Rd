@@ -38,4 +38,5 @@ drain.dia is flawed by the presence of a waterbody in the network
 }
 \examples{
 g <- net_calc(netdelin = c, vpu = "01", nhdplus_path = getwd())
+
 }
