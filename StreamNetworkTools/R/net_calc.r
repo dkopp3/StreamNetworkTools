@@ -64,18 +64,13 @@ net_calc <- function(netdelin, vpu, nhdplus_path ){
   drain.den <- cat.area[ ,"LENGTHKM"] / cat.area[ ,"AREASQKM"]
   cat.area <- data.frame(cat.area, drain.den)
   #diversion feature count
-  div.rm <- reach.data[reach.data[,c("STREAMORDE")] ==
-                         reach.data[,"STREAMCALC"],
+  #counts minor flow paths of divergences
+  div.rm <- reach.data[reach.data[,c("STREAMORDE")] !=
+                         reach.data[,"STREAMCALC"]&reach.data[,"DIVERGENCE"]==2,
                        c("net.comid","group.comid")]
-  u <- aggregate(div.rm[,"group.comid"],
+  diver.cnt <- aggregate(div.rm[,"group.comid"],
                  by = list(div.rm[,"group.comid"]),
                  length)
-  z <- aggregate(reach.data[, "group.comid"],
-                 by = list(reach.data[,"group.comid"]),
-                 length)
-  uz <- merge(z, u, by = "Group.1")
-  diver.cnt <- data.frame(group.comid = uz[,1],
-                          diverg = uz[, "x.x"] - uz[, "x.y"])
   names(diver.cnt) <- c("COMID", "diver.cnt")
 
   #headwaters & Tribs
