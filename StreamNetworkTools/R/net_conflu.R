@@ -84,7 +84,7 @@ net_conflu <- function (netdelin, nhdplus_path, vpu){
           trib_order <- max(t[, "STREAMORDE"])
         }
         trib_area <- sum(t[, "TOTDASQKM"])
-        junction_num <- as.numeric(paste(t[order(t[, "STREAMORDE"]),"STREAMORDE"], collapse=""))
+        junction_num <- as.numeric(paste(t[order(t[, "STREAMORDE"]), "STREAMORDE"], collapse = ""))
         #coordinates
         trib <- NHD[NHD$group.comid == i &
                       NHD$COMID %in%

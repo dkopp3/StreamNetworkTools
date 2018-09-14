@@ -24,7 +24,6 @@
 #' \url{https://epsg.io/4269});\code{CRS = 5070} = NAD83/CONUS Albers (see
 #' \url{https://epsg.io/5070})
 #' @export
-
 net_comid <- function(sample_points, CRS, nhdplus_path, vpu, maxdist){
   dir.spatial <- grep(paste(vpu, "/NHDSnapshot/Hydrography", sep = ""),
                       list.dirs(nhdplus_path, full.names = T),
@@ -38,7 +37,11 @@ net_comid <- function(sample_points, CRS, nhdplus_path, vpu, maxdist){
   NHDFlowline <- sf::st_read(dir.spatial, layer = "NHDFlowline")
   NHDFlowline <- sf::st_transform(NHDFlowline, crs = (5070))
   NHDFlowline <- sf::st_zm(NHDFlowline, drop = T, what = "ZM")
-  vpu<-"01"
+  geom <- sf::st_geometry(NHDFlowline)
+  sf::st_geometry(NHDFlowline)<-NULL
+  names(NHDFlowline) <- toupper(names(NHDFlowline))
+  NHDFlowline <- sf::st_sf(NHDFlowline,geom=geom) 
+  
   directory <- grep(paste(vpu, "/NHDPlusAttributes", sep = ""),
                     list.dirs(nhdplus_path, full.names = T),
                     value = T)
@@ -47,14 +50,15 @@ net_comid <- function(sample_points, CRS, nhdplus_path, vpu, maxdist){
               value = T)
   vaa <- foreign::read.dbf(Vaa)
   names(vaa) <- toupper(names(vaa))
-
+  
   sample_points <- sf::st_as_sf(sample_points, coords = c(2,3), crs = CRS)
   sample_points <- sf::st_transform(sample_points, crs = 5070)
-
+  
   #search Radius around each point
   rad <- sf::st_buffer(sample_points, dist = maxdist)
   int <- sf::st_intersection(rad, NHDFlowline)
-  sites <- unique(int$SITE_ID)
+  
+  sites <- as.character(unique(int$SITE_ID))
   out <- data.frame(SITE_ID = character(),
                     X = numeric(),
                     Y = numeric(),
@@ -68,7 +72,8 @@ net_comid <- function(sample_points, CRS, nhdplus_path, vpu, maxdist){
                     STREAMORDE = numeric())
   for (i in sites){
     #identify for site i
-    p <- sf::st_sfc(sf::st_point(sf::st_coordinates(sample_points[sample_points$SITE_ID == i, ])), crs = 5070)
+    p <- sf::st_sfc(sf::st_point(sf::st_coordinates(sample_points[sample_points$SITE_ID == i, ])), 
+                    crs = 5070)
     geom <- sf::st_geometry(p)
     p <- sf::st_sf(geom, data.frame(id = as.character(i)))
     #identify which comid's are in search radius
@@ -113,7 +118,7 @@ net_comid <- function(sample_points, CRS, nhdplus_path, vpu, maxdist){
         lp <- sf::st_sfc(sf::st_point(apply(l[j, c(1, 2)], 2, as.numeric)), crs = 5070)
         geom <- sf::st_geometry(lp)
         lp <- sf::st_sf(geom, data.frame(id = as.character(l[j, "COMID"])))
-
+        
       } else {
         temp <- sf::st_sfc(sf::st_point(apply(l[j, c(1, 2)], 2, as.numeric)), crs = 5070)
         geom <- sf::st_geometry(temp)
@@ -125,7 +130,7 @@ net_comid <- function(sample_points, CRS, nhdplus_path, vpu, maxdist){
     colnames(dist) <- paste(lp$id, c(1:length(lp$id)), sep = "_")
     rownames(dist) <- p$id
     snap_dist <- apply(dist, 1, min)
-
+    
     snap_vert <- sf::st_coordinates(lp[which(as.numeric(dist[1, ]) ==
                                                as.numeric(snap_dist)), ])
     colnames(snap_vert) <- c("snap_X", "snap_Y")
@@ -136,7 +141,7 @@ net_comid <- function(sample_points, CRS, nhdplus_path, vpu, maxdist){
     COMID_GNIS <- COMID_GNIS[1,]
     #match with VAA HERE
     DA<-vaa[vaa[,"COMID"]==COMID_GNIS[,"COMID"],c("TOTDASQKM","STREAMORDE")]
-
+    
     snap_vert <- sf::st_transform(lp[which(as.numeric(dist[1, ]) ==
                                              as.numeric(snap_dist)), ],
                                   crs = CRS)
@@ -178,3 +183,5 @@ net_comid <- function(sample_points, CRS, nhdplus_path, vpu, maxdist){
                  "COMID", "GNIS_NAME", "vpu",
                  "TOTDASQKM","STREAMORDE")])
 }
+
+

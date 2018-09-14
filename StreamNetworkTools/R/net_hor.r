@@ -209,7 +209,7 @@ net_hort<-function (netdelin, vpu, nhdplus_path){
   if (any(warn[,"STREAMORDE"]-1 != warn[,"ohm"])){
     id<-as.character(warn[warn[,"STREAMORDE"]-1 != warn[,"ohm"], "net.comid"])
     warning(paste("group.comid", id,
-                  "estimates may be inaccurate due to NHDPlus STREAMORDER"))
+                  "estimates may be inaccurate due to NHDPlus vaa STREAMORDER"))
     }
   return(data.out)
   }
