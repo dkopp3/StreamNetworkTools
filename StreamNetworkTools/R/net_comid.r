@@ -193,6 +193,7 @@ net_comid <- function(sample_points, CRS, nhdplus_path, vpu, maxdist){
     out[,"SITE_ID"] <- as.character(out[,"SITE_ID"])
     out <- rbind(out, data.frame(SITE_ID = um$SITE_ID, xy,
                                  snap_dist = NA,
+                                 M = NA,
                                  snap_x = NA,
                                  snap_y = NA,
                                  vpu = NA,
@@ -202,7 +203,7 @@ net_comid <- function(sample_points, CRS, nhdplus_path, vpu, maxdist){
                                  STREAMORDE = NA))
   }
   return(out[, c("SITE_ID", "X", "Y",
-                 "snap_dist", "snap_x", "snap_y",
+                 "snap_dist", "snap_x", "snap_y","M",
                  "COMID", "GNIS_NAME", "vpu",
                  "TOTDASQKM","STREAMORDE")])
 }
