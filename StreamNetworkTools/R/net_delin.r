@@ -15,6 +15,8 @@
 #' @param nhdplus_path nhdplus_path directory for downloaded NHDPlus files
 #'   (\code{\link{net_nhdplus}})
 #' @param vpu vector processing unit
+#' @param M Indcates position of samppling point on flowline for geach group
+#'   COMID generated from \code{\link{net_comid}}.
 #'
 #' @return netdelin, a named list (\code{$Network, $Nested_COMIDs, $SF_Obj})
 #'   which serves as an argeument for subsequent functions in StreamNetworkTools.
@@ -28,11 +30,17 @@
 #' write_sf(b$SF_Obj...)
 #' @export
 
-net_delin <- function (group_comid, nhdplus_path, vpu) {
+net_delin <- function (group_comid, nhdplus_path, vpu, M = NULL) {
 
   if(is.character(group_comid)==F){
       stop("group_comid must be character vector")
   }
+  Ms <- M
+  if (length(Ms) == 0) {
+    Ms<- rep(1,length(group_comid))
+    } else if (length(Ms)!= length(group_comid)) {
+      stop("length(M)!=length(group_comid)")
+    }
 
   directory <- grep(paste(vpu, "/NHDPlusAttributes", sep = ""),
                     list.dirs(nhdplus_path, full.names = T), value = T)
@@ -53,7 +61,8 @@ net_delin <- function (group_comid, nhdplus_path, vpu) {
   names(NHDFlowline)[1] <- toupper(names(NHDFlowline)[1])
   network <- data.frame(group.comid = character(),
                         net.comid = character(),
-                        vpu = character())
+                        vpu = character(),
+                        M = numeric ())
   #nested<-NULL
   #delineate network for each group COMID
   for (i in 1:length(group_comid)) {
@@ -66,22 +75,25 @@ net_delin <- function (group_comid, nhdplus_path, vpu) {
     }
     group.comid <- group_comid[i]
     net.comid <- unique(net[order(net)])
-    network <- rbind(network, cbind(group.comid, net.comid, vpu))
-  }
+    M <- ifelse(group.comid==net.comid, Ms[i] , 1)
+    network <- rbind(network, data.frame(group.comid = group.comid,
+                                         net.comid = net.comid,
+                                         vpu = vpu,
+                                         M = M))
+    }
     #check for nested COMID's and display warning()
     q <- aggregate(network[,"net.comid"], by =list(network[,"net.comid"]), length)
     head(q)
     w <- unique(network[network[,"net.comid"] %in% q[q[, "x"] > 2, "Group.1"], ])
     alarm <- list()
     if(length(w[,1])>0){
-    for (h in unique(w[,"net.comid"])){
-      o<-list(as.character(w[w[,"net.comid"]==h, "group.comid"]))
-      alarm[[h]]<-o
+      for (h in unique(w[,"net.comid"])){
+      o <- list(as.character(w[w[, "net.comid"] == h, "group.comid"]))
+      alarm[[h]] <- o
     }
     alarm<-unique(alarm)
-    warning("nested comid's listed in $Nested_COMIDs" )
+    warning("check nested comid's listed in $Nested_COMIDs" )
     }
-
     count <- 1
     for (p in levels(network[,"group.comid"])){
         if (count == 1) {
@@ -99,7 +111,6 @@ net_delin <- function (group_comid, nhdplus_path, vpu) {
     out <- list(Network = network,
                 Nested_COMIDs = alarm,
                 SF_Obj = save.shp)
-
     return(out)
 }
 #-----------------------------------------------------
