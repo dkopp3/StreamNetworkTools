@@ -74,10 +74,10 @@ net_calc <- function(netdelin, vpu, nhdplus_path ){
     diver.cnt <- aggregate(div.rm[, "group.comid"],
                            by = list(div.rm[, "group.comid"]),
                            length)
-  names(diver.cnt) <- c("COMID", "diver.cnt")
-  } else {
-    diver.cnt<-data.frame(COMID=99999,div.cnt=999999)
-  }
+    names(diver.cnt) <- c("COMID", "diver.cnt")
+    } else {
+      diver.cnt<-data.frame(COMID=99999,diver.cnt=999999)
+    }
 
   #headwaters & Tribs
   head.h2o <- aggregate(reach.data[reach.data[,"STARTFLAG"] == 1,

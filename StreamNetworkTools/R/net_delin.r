@@ -32,9 +32,10 @@
 
 net_delin <- function (group_comid, nhdplus_path, vpu, M = NULL) {
 
-  if(is.character(group_comid)==F){
+  if(is.character(group_comid) == F){
       stop("group_comid must be character vector")
   }
+
   Ms <- M
   if (length(Ms) == 0) {
     Ms<- rep(1,length(group_comid))
@@ -42,6 +43,12 @@ net_delin <- function (group_comid, nhdplus_path, vpu, M = NULL) {
       stop("length(M)!=length(group_comid)")
     }
 
+  if (any(duplicated(group_comid))) {
+    warning(paste("duplicated comid:",
+                  group_comid[duplicated(group_comid)],
+                  "network delineated once", sep = " "))
+  }
+  group_comid <- unique(group_comid)
   directory <- grep(paste(vpu, "/NHDPlusAttributes", sep = ""),
                     list.dirs(nhdplus_path, full.names = T), value = T)
   #to/from comids
