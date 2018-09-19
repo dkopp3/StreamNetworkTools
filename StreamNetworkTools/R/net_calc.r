@@ -65,13 +65,19 @@ net_calc <- function(netdelin, vpu, nhdplus_path ){
   cat.area <- data.frame(cat.area, drain.den)
   #diversion feature count
   #counts minor flow paths of divergences
-  div.rm <- reach.data[reach.data[,c("STREAMORDE")] !=
-                         reach.data[,"STREAMCALC"]&reach.data[,"DIVERGENCE"]==2,
-                       c("net.comid","group.comid")]
-  diver.cnt <- aggregate(div.rm[,"group.comid"],
-                 by = list(div.rm[,"group.comid"]),
-                 length)
+  if (any(reach.data[,c("STREAMORDE")] != reach.data[,"STREAMCALC"] &
+          reach.data[,"DIVERGENCE"]==2)){
+    div.rm <- reach.data[reach.data[,c("STREAMORDE")] !=
+                         reach.data[,"STREAMCALC"] & reach.data[, "DIVERGENCE"] == 2,
+                         c("net.comid", "group.comid")]
+
+    diver.cnt <- aggregate(div.rm[, "group.comid"],
+                           by = list(div.rm[, "group.comid"]),
+                           length)
   names(diver.cnt) <- c("COMID", "diver.cnt")
+  } else {
+    diver.cnt<-data.frame(COMID=99999,div.cnt=999999)
+  }
 
   #headwaters & Tribs
   head.h2o <- aggregate(reach.data[reach.data[,"STARTFLAG"] == 1,
@@ -108,6 +114,6 @@ net_calc <- function(netdelin, vpu, nhdplus_path ){
   data.out<-Reduce(function(x, y) merge(x, y,
                               by = "COMID",
                               all.x = T),
-                   list(data.out, relief,head.h2o, cat.area, WS.ord, reach.cnt, diver.cnt))
+                   list(data.out, relief, head.h2o, cat.area, WS.ord, reach.cnt, diver.cnt))
   return(data.out)
 }
