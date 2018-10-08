@@ -2,21 +2,24 @@
 #'
 #' Determines the closest NHDPlus COMID within a radius of a sampling point
 #'
-#' NHDSnapshot and NHDPlusAttributes is required NHDlus download (see \code{\link{net_nhdplus}})
+#' NHDSnapshot and NHDPlusAttributes is required NHDlus download (see
+#' \code{\link{net_nhdplus}})
 #'
-#' @param sample_points \code{data.frame} with field names "SITE_ID", "X" and "Y" to
-#'   identify location
+#' @param sample_points \code{data.frame} with field names "SITE_ID", "X" and
+#'   "Y" to identify location
 #' @param CRS coordinate reference system of pts (see examples)
 #' @param nhdplus_path directory for downloaded NHDPlus files
 #' @param vpu NHDPlus vector processing unit
 #' @param maxdist search radius around points (m)
 #'
 #' @return \code{data.frame} with site identifier (i.e \code{SITE_ID}, \code{X},
-#'   and \code{Y}), x, y coordinates (\code{snap_x,snap_y}) for position on
-#'   NHDPlus flowline (COMID), distance (\code{snap_dist}) in meters to
-#'   \code{pts} argument. \code{GNIS_NAME}, \code{TOTDASQKM} and
-#'   \code{STREAMORDE} are NHDPlus Value Added Attributes and should be used as an aide
-#'   to confirm COMID is correct.
+#'   and \code{Y}), x, y coordinates for snapped point (\code{snap_x,snap_y}),
+#'   position on NHDPlus flowline represented as proportion (\code{M}), distance
+#'   from input point (\code{snap_dist}) in meters and \code{COMID} of the
+#'   NHDPlusV2 flowline. \code{GNIS_NAME}, and \code{STREAMORDE} are NHDPlus
+#'   Value Added Attributes and should be used as an aide to confirm COMID is
+#'   correct.  \code{ApproxTOTDASQKM} is drainage area at outlet of flowline and
+#'   and may overestimate drainage area upstream of sampling point.
 #'
 #' @examples net_comid(sample_points = z, CRS = 4269, nhdplus_path = getwd(), vpu="01", maxdist = 100)
 #'
@@ -202,10 +205,17 @@ net_comid <- function(sample_points, CRS, nhdplus_path, vpu, maxdist){
                                  TOTDASQKM = NA,
                                  STREAMORDE = NA))
   }
-  return(out[, c("SITE_ID", "X", "Y",
-                 "snap_dist", "snap_x", "snap_y","M",
-                 "COMID", "GNIS_NAME", "vpu",
-                 "TOTDASQKM","STREAMORDE")])
+
+  out<-out[, c("SITE_ID", "X", "Y",
+               "snap_dist", "snap_x", "snap_y","M",
+               "COMID", "GNIS_NAME", "vpu",
+               "TOTDASQKM","STREAMORDE")]
+  names(out)<-c("SITE_ID", "X", "Y",
+                "snap_dist", "snap_x", "snap_y","M",
+                "COMID", "GNIS_NAME", "vpu",
+                "ApproxTOTDASQKM","STREAMORDE")
+  return(out)
+
 }
 
 

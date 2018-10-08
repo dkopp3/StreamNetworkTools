@@ -4,7 +4,7 @@
 \alias{net_delin}
 \title{Network Delineation}
 \usage{
-net_delin(group_comid, nhdplus_path, vpu)
+net_delin(group_comid, nhdplus_path, vpu, M = NULL, snap_xy = NULL)
 }
 \arguments{
 \item{group_comid}{a vector of NHDPlus COMIDs}
@@ -13,6 +13,12 @@ net_delin(group_comid, nhdplus_path, vpu)
 (\code{\link{net_nhdplus}})}
 
 \item{vpu}{vector processing unit}
+
+\item{M}{Indcates position of samppling point on flowline for geach group
+COMID generated from \code{\link{net_comid}}}
+
+\item{snap_xy}{corrdinates of M, if supplied network will be truncated at
+snap_xy point}
 }
 \value{
 netdelin, a named list (\code{$Network, $Nested_COMIDs, $SF_Obj})

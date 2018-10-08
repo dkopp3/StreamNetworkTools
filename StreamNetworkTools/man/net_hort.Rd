@@ -15,23 +15,28 @@ net_hort(netdelin, vpu, nhdplus_path)
 }
 \value{
 named \code{list}: \code{$topology} is \code{data.frame} with count
-  of stream numbers (\code{str_num}), sum of stream lengths (\code{str_len})
-  and sum of drainage areas (\code{str_area}); and \code{$Horton_Est} are
+  of stream numbers (\code{str_num}), mean of stream lengths (\code{str_len})
+  and mean of drainage areas (\code{str_area}); and \code{$Horton_Est} are
   horotn estimates \code{Rb,Rl,Ra} (bifurcation, lenght and area ratio,
   respectively). \code{Rb.rsqr, Rl.rsqr, Ra.rsqr} are R^2 values for the
   \code{lm(...)} model. \code{ohm} is the strahler order of the (network -
   1) (see \code{Details}.
 }
 \description{
-Uses \code{lm(...)} to estimates number, length and area ratios for
-a stream network (i.e. Horton Laws).
+Uses \code{lm(...)} to estimates number, length and area ratios from the
+respected mean values a stream network (i.e. Horton Laws).
 }
 \details{
 requires /NHDPlusAttributes directory (see \code{net_nhdplus})
 
-\code{ohm} is the strahler order of the (network - 1) because sampling point
-(or COMID) my not necessarily encorpporate the entire edge of the largest
-order
+Horton estimates are rounded down to the next lowest WS order (i.e. \code{ohm}
+is the strahler order of the (network - 1)) because a given sampling COMID,
+my not be representative of the whole stream order.
+
+Divergences are not included
+
+Check output for stream orders not exceeding order of group.comid. In some
+networks Error in NHDPlus vaa \code{STREAMORDE} can effect calculations.
 }
 \examples{
 net_hort(netdelin = c, vpu = "01", nhdplus_path = getwd())

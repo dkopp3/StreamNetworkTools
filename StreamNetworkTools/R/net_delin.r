@@ -16,7 +16,9 @@
 #'   (\code{\link{net_nhdplus}})
 #' @param vpu vector processing unit
 #' @param M Indcates position of samppling point on flowline for geach group
-#'   COMID generated from \code{\link{net_comid}}.
+#'   COMID generated from \code{\link{net_comid}}
+#' @param snap_xy corrdinates of M, if supplied network will be truncated at
+#'   snap_xy point
 #'
 #' @return netdelin, a named list (\code{$Network, $Nested_COMIDs, $SF_Obj})
 #'   which serves as an argeument for subsequent functions in StreamNetworkTools.
@@ -30,7 +32,7 @@
 #' write_sf(b$SF_Obj...)
 #' @export
 
-net_delin <- function (group_comid, nhdplus_path, vpu, M = NULL) {
+net_delin <- function (group_comid, nhdplus_path, vpu, M = NULL, snap_xy=NULL) {
 
   if(is.character(group_comid) == F){
       stop("group_comid must be character vector")
@@ -43,20 +45,26 @@ net_delin <- function (group_comid, nhdplus_path, vpu, M = NULL) {
       stop("length(M)!=length(group_comid)")
     }
 
-  if (any(duplicated(group_comid))) {
+  if (any(duplicated(data.frame(group_comid,Ms)))) {
     warning(paste("duplicated comid:",
                   group_comid[duplicated(group_comid)],
-                  "network delineated once", sep = " "))
+                  "single removed", sep = " "))
+    group_comid <- unique(group_comid)
   }
-  group_comid <- unique(group_comid)
+
   directory <- grep(paste(vpu, "/NHDPlusAttributes", sep = ""),
                     list.dirs(nhdplus_path, full.names = T), value = T)
+
+  if(length(directory) == 0){
+    stop("Missing NHDPlusAttributes")
+  }
+
   #to/from comids
   flow.files <- grep("PlusFlow.dbf", list.files(directory[1],
                                                 full.names = T), value = T)
   flow <- foreign::read.dbf(flow.files)
   Vaa <- grep("PlusFlowlineVAA.dbf",
-              list.files(directory[1], full.names=T),
+              list.files(directory[1], full.names = T),
               value = T)
   vaa <- foreign::read.dbf(Vaa)
   names(vaa) <- toupper(names(vaa))
@@ -69,7 +77,8 @@ net_delin <- function (group_comid, nhdplus_path, vpu, M = NULL) {
   network <- data.frame(group.comid = character(),
                         net.comid = character(),
                         vpu = character(),
-                        M = numeric ())
+                        M = numeric (),
+                        net.id = character())
   #nested<-NULL
   #delineate network for each group COMID
   for (i in 1:length(group_comid)) {
@@ -82,43 +91,99 @@ net_delin <- function (group_comid, nhdplus_path, vpu, M = NULL) {
     }
     group.comid <- group_comid[i]
     net.comid <- unique(net[order(net)])
-    M <- ifelse(group.comid==net.comid, Ms[i] , 1)
+    M <- ifelse(group.comid == net.comid, Ms[i] , 1)
     network <- rbind(network, data.frame(group.comid = group.comid,
                                          net.comid = net.comid,
                                          vpu = vpu,
-                                         M = M))
-    }
-    #check for nested COMID's and display warning()
-    q <- aggregate(network[,"net.comid"], by =list(network[,"net.comid"]), length)
-    head(q)
-    w <- unique(network[network[,"net.comid"] %in% q[q[, "x"] > 2, "Group.1"], ])
-    alarm <- list()
-    if(length(w[,1])>0){
-      for (h in unique(w[,"net.comid"])){
+                                         M = M,
+                                         net.id = i))
+  }
+
+  #check for nested COMID's and display warning()
+  q <- aggregate(network[,"net.comid"], by = list(network[,"net.comid"]), length)
+  head(q)
+  w <- unique(network[network[,"net.comid"] %in% q[q[, "x"] > 2, "Group.1"], ])
+  alarm <- NULL#list()
+  if(length(w[,1]) > 0){
+    for (h in unique(w[,"net.comid"])){
       o <- list(as.character(w[w[, "net.comid"] == h, "group.comid"]))
-      alarm[[h]] <- o
+      alarm <- append(alarm,o)#[[h]] <- o
     }
-    alarm<-unique(alarm)
-    warning("check nested comid's listed in $Nested_COMIDs" )
-    }
-    count <- 1
-    for (p in levels(network[,"group.comid"])){
-        if (count == 1) {
-          save.shp <- NHDFlowline[NHDFlowline$COMID %in% network[network[,"group.comid"]==p, "net.comid"], "COMID"]
-          save.shp$group.comid <- p
-          save.shp$VPUID <- vpu
-        } else {
-          temp <- NHDFlowline[NHDFlowline$COMID %in% network[network[,"group.comid"]==p, "net.comid"], "COMID"]
-          temp$group.comid <- p
-          temp$VPUID <- vpu
-          save.shp <- rbind(save.shp, temp)
+    alarm<-unique(unlist(alarm))
+    warning("nested comid's listed in $Nested_COMIDs")
+  }
+
+  count <- 0
+  for (p in group_comid){
+    count <- count + 1
+
+    if (count == 1) {
+      save.shp <- NHDFlowline[NHDFlowline$COMID %in% network[network[,"group.comid"] == p, "net.comid"], "COMID"]
+      save.shp$group.comid <- p
+      save.shp$VPUID <- vpu
+      save.shp$Meas <- 1
+      save.shp$net.id <- count
+      #plot(sf::st_zm(save.shp,drop=T,what="ZM"))
+      if(!is.null(snap_xy)){
+        #adjust group.comid to reflect M value
+        #drop,adjust,append - simple enough
+        pt <- sf::st_coordinates(save.shp[save.shp$COMID == save.shp$group.comid, ])
+        #decimal places are subject to rounding in R, making exact matching difficult...
+        #the index of pt that matches (min value between xy stored in NHD and snaped point)
+
+        Mindexx <- which.min(abs(pt[,1] - snap_xy[count, 1]))
+        Mindexy <- which.min(abs(pt[,2] - snap_xy[count, 2]))
+        if(Mindexx != Mindexy){
+          stop(paste("cannot truncate", p, "casued a bug that i didnt think would happen!"))
         }
-      count<-count+1
+
+        geometry <- sf::st_geometry(sf::st_linestring(pt[1:Mindexx,c("X","Y")]))
+        pt <- sf::st_sf(data.frame(COMID=p, group.comid = p,
+                                   VPUID = vpu, Meas = Ms[count],
+                                   net.id = count),
+                        geometry, crs =  sf::st_crs(save.shp))
+
+        save.shp <- sf::st_zm(save.shp[save.shp$COMID != save.shp$group.comid, ], drop = T, what = "ZM")
+        save.shp <- rbind(save.shp, pt)
       }
-    out <- list(Network = network,
-                Nested_COMIDs = alarm,
-                SF_Obj = save.shp)
-    return(out)
+    } else {
+      temp <- NHDFlowline[NHDFlowline$COMID %in%
+                            network[network[, "group.comid"] == p, "net.comid"],
+                          "COMID"]
+      temp$group.comid <- p
+      temp$VPUID <- vpu
+      temp$Meas <- 1
+      temp$net.id <- count
+
+      if(!is.null(snap_xy)){
+        #adjust group.comid to reflect M value
+        #drop,adjust,append - simple enough
+        pt <- sf::st_coordinates(temp[temp$COMID == temp$group.comid, ])
+        #decimal places are subject to rounding in R, making exact matching difficult...
+        #the index of pt that matches (min value between xy stored in NHD and snaped point)
+
+        Mindexx <- which.min(abs(pt[,1] - snap_xy[count, 1]))
+        Mindexy <- which.min(abs(pt[,2] - snap_xy[count, 2]))
+        if(Mindexx != Mindexy){
+          stop(paste("cannot truncate", p,"casued a bug that i didnt think would happen!"))
+        }
+        geometry <- sf::st_geometry(sf::st_linestring(pt[1:Mindexx,c("X","Y")]))
+        pt <- sf::st_sf(data.frame(COMID=p,group.comid = p,
+                                   VPUID = vpu, Meas = Ms[count],
+                                   net.id = count),
+                        geometry, crs =  sf::st_crs(temp))
+
+        temp <- sf::st_zm(temp[temp$COMID != temp$group.comid, ],drop = T, what = "ZM")
+        temp <- rbind(temp,pt)
+      }
+      save.shp <- rbind(save.shp, temp)
+    }
+
+  }
+  out <- list(Network = network,
+              Nested_COMIDs = alarm,
+              SF_Obj = save.shp)
+  return(out)
 }
 #-----------------------------------------------------
 #' Identify Network Segments

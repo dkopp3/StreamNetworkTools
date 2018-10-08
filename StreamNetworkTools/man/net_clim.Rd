@@ -36,7 +36,7 @@ see(\code{\link{net_nhdplus}})}
  \code{wet_q_t} mean temperature of wettest quarter; \code{warm_q_p}
  cumulaltive mean precipitation of warmest quarter; \code{cold_q_p}
  cumulaltive mean precipitation of coldest quarter; \code{RUNOFFVC}
- cumulative mean annual runff (mm); \code{MAFLOWV} Vogal Estimation of mean
+ cumulative mean annual runoff (mm); \code{MAFLOWV} Vogal Estimation of mean
  annual discharge; \code{MAVELV} Vogal estimation of mean annual velocity at
  network outlet; \code{Q0001E} EROM estimation of mean mean annual
  discharge; \code{V0001E} EROM estimation of mean annual velocity

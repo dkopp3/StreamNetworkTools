@@ -25,7 +25,7 @@ from a vector processing unit. Can serve as root node
 for steam network (see \code{\link{net_delin}}).
 }
 \details{
-".\NHDPlus" must be a subdirectory of \code{nhdplus_path}.
+\code{"./NHDPlus"} must be a subdirectory of \code{nhdplus_path}.
 
 NHDPlusAttributes and NHDSnapshot are required NHDlus downloads (see \code{\link{net_nhdplus}})
 }

@@ -35,46 +35,55 @@ net_hort<-function (netdelin, vpu, nhdplus_path){
   directory<-grep(paste(vpu,"/NHDPlusAttributes",sep=""),
                   list.dirs(nhdplus_path,full.names=T),
                   value = T)
+
   vaa<-grep("PlusFlowlineVAA.dbf",
             list.files(directory[1], full.names = T),
             value = T)
+
   vaa<-foreign::read.dbf(vaa)
   names(vaa) <- toupper(names(vaa))
-  full.net <- netdelin$Network
+
+  #M measures and net.id become unnecessary.
+  #the focal ohm is the group comid - 1.
+  if(any(duplicated(netdelin$Network[, c("group.comid", "net.comid")]))){
+    warning ("FYI droping M and net.id values, COMID is indexes network")
+  }
+
+  full.net <- unique(netdelin$Network[,c("group.comid", "net.comid", "vpu")])
+
   vaa <- merge(full.net, vaa,
                by.x = "net.comid",
                by.y = "COMID")
+
   warn_mess <- vaa[as.character(vaa[ ,"group.comid"]) ==
                      as.character(vaa[ ,"net.comid"]),
                    c("net.comid","STREAMORDE")]
+
   #remove diveregences
   vaa <- vaa[vaa[,"STREAMORDE"] == vaa[, "STREAMCALC"], ]
 
-  data<-data.frame(group.comid = character(),
-                   str_ord = integer(),
-                   str_num = integer(),
-                   srt_len = numeric(),
+  data<-data.frame(group.comid = character(), str_ord = integer(),
+                   str_num = integer(), srt_len = numeric(),
                    str_area = numeric())
 
-  hor.laws <- data.frame(group.comid = character(),
-                         ohm = numeric(),
-                         Rb = numeric(),
-                         Rb.rsqr = numeric(),
-                         Rl = numeric(),
-                         Rl.rsqr = numeric(),
-                         Ra = numeric(),
-                         Ra.rsqr = numeric())
+  hor.laws <- data.frame(group.comid = character(), ohm = numeric(),
+                         Rb = numeric(), Rb.r2 = numeric(),
+                         Rl = numeric(), Rl.r2 = numeric(),
+                         Ra = numeric(), Ra.r2 = numeric())
 
   for (q in unique(full.net[,"group.comid"])){
-    a <- vaa[vaa[,"group.comid"]==q, c("group.comid","net.comid",
-                                       "STREAMORDE","LEVELPATHI",
-                                       "TONODE","FROMNODE","LENGTHKM","AREASQKM")]
+    a <- vaa[vaa[,"group.comid"] == q,
+             c("group.comid", "net.comid",
+               "STREAMORDE", "LEVELPATHI",
+               "TONODE", "FROMNODE",
+               "LENGTHKM", "AREASQKM")]
 
   for (p in unique(a[,"STREAMORDE"])){
     z <- a[a[,"STREAMORDE"] == p, ]
     z <- split(z,list(z[,"LEVELPATHI"],as.character(z[,"group.comid"])))
     TOO <- lapply(z,"[[","TONODE")
     FRO <- lapply(z,"[[","FROMNODE")
+
     for (i in length(z):1){
       #i<-68
       #with element i, compare tonode to all fromnodes not i
@@ -84,59 +93,59 @@ net_hort<-function (netdelin, vpu, nhdplus_path){
       TOO_ULi <- TOO_ULi[TOO_ULi%in%FRO_UL]
 
       if(length(TOO_ULi)>0){
-      TOO_ULi<-sapply(lapply(z,"[[",c("FROMNODE")), function(x) x %in% TOO_ULi)
+        TOO_ULi<-sapply(lapply(z,"[[",c("FROMNODE")), function(x) x %in% TOO_ULi)
       if(length(dim(TOO_ULi))>0){
         TOO_ULi<-apply(TOO_ULi,2,function(x) any(x))
       } else {
         TOO_ULi<-sapply(TOO_ULi,function(x) any(x))
       }
-      z[[ifelse(which(TOO_ULi),names(which(TOO_ULi)))]]["LEVELPATHI"] <- unique(z[[i]]["LEVELPATHI"])
+      z[[ifelse(which(TOO_ULi), names(which(TOO_ULi)))]]["LEVELPATHI"] <- unique(z[[i]]["LEVELPATHI"])
       }
 
       #with element i, compare fromnodes to all tonodes not i
       #downstr connection
-      FRO_ULi<-unlist(FRO[i], use.names = F)
-      TOO_UL<-unlist(TOO[-i], use.names = F)
-      FRO_ULi<-FRO_ULi[FRO_ULi%in%TOO_UL]
+      FRO_ULi <- unlist(FRO[i], use.names = F)
+      TOO_UL <- unlist(TOO[-i], use.names = F)
+      FRO_ULi <- FRO_ULi[FRO_ULi%in%TOO_UL]
 
-      if(length(FRO_ULi)>0){
+      if(length(FRO_ULi) > 0){
       #which element in -i matches
-      FRO_ULi<-sapply(lapply(z, "[[", c("TONODE")), function(x) x %in% FRO_ULi)
-      if(length(dim(FRO_ULi))>0){
-        FRO_ULi<-apply(FRO_ULi,2, function(x) any(x))
+      FRO_ULi <- sapply(lapply(z, "[[", c("TONODE")), function(x) x %in% FRO_ULi)
+      if(length(dim(FRO_ULi)) > 0){
+        FRO_ULi <- apply(FRO_ULi, 2, function(x) any(x))
       } else {
-        FRO_ULi<-sapply(FRO_ULi,function(x) any(x))
+        FRO_ULi <- sapply(FRO_ULi, function(x) any(x))
       }
-      z[[ifelse(which(FRO_ULi),names(which(FRO_ULi)))]]["LEVELPATHI"] <- unique(z[[i]]["LEVELPATHI"])
+      z[[ifelse(which(FRO_ULi), names(which(FRO_ULi)))]]["LEVELPATHI"] <- unique(z[[i]]["LEVELPATHI"])
       }
     }
 
-    z<-setNames(do.call(rbind.data.frame, z), names(z[[1]]))
-    z<-split(z, list(z[,"LEVELPATHI"],as.character(z[,"group.comid"])))
+    z <- setNames(do.call(rbind.data.frame, z), names(z[[1]]))
+    z <- split(z, list(z[, "LEVELPATHI"], as.character(z[, "group.comid"])))
     #spply aggregares list element
     #naming w/comid
     L <- sapply(lapply(z, "[","LENGTHKM"), sum)
     group.comid <- unlist(lapply(strsplit(names(L), "\\."), "[[", 2))
     L <- data.frame(group.comid = group.comid, L = L, row.names = NULL)
-    L <- aggregate(L[,"L"],by=list(group.comid = L[,"group.comid"]), mean)
-    names(L)[2]<-"str_len"
+    L <- aggregate(L[,"L"],by = list(group.comid = L[,"group.comid"]), mean)
+    names(L)[2] <- "str_len"
 
     A <- sapply(lapply(z,"[[","AREASQKM"), sum)
     group.comid <- unlist(lapply(strsplit(names(A), "\\."), "[[", 2))
     A <- data.frame(group.comid = group.comid, A = A, row.names = NULL)
-    A <- aggregate(A[,"A"],by = list(group.comid = A[, "group.comid"]), mean)
+    A <- aggregate(A[,"A"], by = list(group.comid = A[, "group.comid"]), mean)
     names(A)[2] <- "str_area"
 
-    N <- sapply(lapply(z,"[[",7),length)
+    N <- sapply(lapply(z, "[[", 7), length)
     group.comid <- unlist(lapply(strsplit(names(N), "\\."), "[[", 2))
     N <- data.frame(group.comid = group.comid, N = N, row.names = NULL)
-    N <- aggregate(N[,"N"],by = list(group.comid = N[, "group.comid"]), length)
+    N <- aggregate(N[,"N"], by = list(group.comid = N[, "group.comid"]), length)
     names(N)[2] <- "str_num"
 
-  temp <- Reduce(function(x, y) merge(x, y,
-                                by = c("group.comid"),
-                                all.x = T), list(N, L, A))
-  data <- rbind(data,data.frame(str_ord=p,temp))
+  temp <- Reduce(function(x, y)
+    merge(x, y,by = c("group.comid"), all.x = T), list(N, L, A))
+
+  data <- rbind(data, data.frame(str_ord = p, temp))
   }
 
       horton <- data[data[,"group.comid"] == q, ]
@@ -158,18 +167,21 @@ net_hort<-function (netdelin, vpu, nhdplus_path){
         horton <- horton[horton[,"str_ord"] != max(horton[,"str_ord"]), ]
         ohm <- max(horton[, "str_ord"])
         x <- ohm - horton[, "str_ord"]
+
         # estimate log(Rb) as slope
         lmRb <- summary(lm(log(horton[,"str_num"]) ~ (x)))
         # log(Rb)=0.9367344; log() has default base of exp(1)
         # thus slove for Rb w/base e
         Rb <- exp(lmRb$coefficients["x", 1])
         lmRb.r.squared <- (lmRb$r.squared)
+
         #Lw=L1*RL^(w-1)
         x <- horton[, "str_ord"] - 1
         L1 <- rep(horton[horton[,"str_ord"] ==1, "str_len"], length(horton[, "str_len"]))
         lmRl <- summary(lm(log(horton[, "str_len"]) ~ log(L1) + (x)))
         Rl <- exp(lmRl$coefficients["x", 1])
         lmRl.r.squared <- (lmRl$r.squared)
+
         #Aw=A1*RA^(w-1)
         x <- horton[,"str_ord"] - 1
         A1 <- rep(horton[horton[,"str_ord"] == 1, "str_area"], length(horton[, "str_area"]))
@@ -177,39 +189,34 @@ net_hort<-function (netdelin, vpu, nhdplus_path){
         Ra <- exp(lmRa$coefficients["x", 1])
         lmRa.r.squared <- (lmRa$r.squared)
         group.comid <- q
-        out <- data.frame(COMID = group.comid,
-                          ohm = ohm,
-                          Rb = Rb,
-                          Rb.rsqr = lmRb.r.squared,
-                          Rl = Rl,
-                          Rl.rsqr = lmRl.r.squared,
-                          Ra = Ra,
-                          Ra.rsqr = lmRa.r.squared)
+
+        out <- data.frame(COMID = group.comid, ohm = ohm,
+                          Rb = Rb, Rb.r2 = lmRb.r.squared,
+                          Rl = Rl, Rl.r2 = lmRl.r.squared,
+                          Ra = Ra, Ra.r2 = lmRa.r.squared)
+
         hor.laws <- rbind(hor.laws, out)
         } else {
           ohm <- max(horton[,"str_ord"])-1
-          out <- data.frame(COMID = q,
-                            ohm = ohm,
-                            Rb = NA,
-                            Rb.rsqr = NA,
-                            Rl = NA,
-                            Rl.rsqr = NA,
-                            Ra = NA,
-                            Ra.rsqr = NA)
+          out <- data.frame(COMID = q, ohm = ohm,
+                            Rb = NA, Rb.r2 = NA,
+                            Rl = NA, Rl.r2 = NA,
+                            Ra = NA, Ra.r2 = NA)
+
           hor.laws <- rbind(hor.laws, out)
           }
   }
 
-  data.out <- list(topology = data,
+  data.out <- list(topology = data[,c("group.comid","str_ord", "str_num", "str_len", "str_area")],
                    Horton_est = hor.laws)
-  warn<-merge(warn_mess[,c("net.comid","STREAMORDE")],
-              hor.laws[,c("COMID","ohm")],
-              by.x = "net.comid", by.y = "COMID")
+  warn <- merge(warn_mess[,c("net.comid","STREAMORDE")],
+                hor.laws[,c("COMID","ohm")],
+                by.x = "net.comid", by.y = "COMID")
 
   if (any(warn[,"STREAMORDE"]-1 != warn[,"ohm"])){
     id<-as.character(warn[warn[,"STREAMORDE"]-1 != warn[,"ohm"], "net.comid"])
-    warning(paste("group.comid", id,
-                  "estimates may be inaccurate due to NHDPlus vaa STREAMORDER"))
-    }
+    warning(paste("group.comid", id, "estimates may be inaccurate due to NHDPlus vaa STREAMORDER"))
+  }
+
   return(data.out)
   }
