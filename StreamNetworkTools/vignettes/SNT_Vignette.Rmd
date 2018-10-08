@@ -1,0 +1,28 @@
+---
+title: "StreamNetworkTools Vignette"
+author: "Darin Kopp"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{StreamNetworkTools Vignette}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+This vignette discusses the useage of StreamNetworkTools, an R package to derive covariates from NHDPlusV2 dataset and faciliate large (continental) scale analyses of river networks. 
+
+Installing StreamNetworkTools*
+1)	library("devtools")
+install_git("https://github.com/dkopp3/StreamNetworkTools_git.git", subdir = "StreamNetworkTools")
+2)	install_github(“dkopp3/StreamNetworkTools_git”, subdir = "StreamNetworkTools")
+
+
+
+

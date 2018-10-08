@@ -1,9 +1,8 @@
 Package: StreamNetworkTools
 Title: Chracterizing Topology and Planform Geometry of NHDPlusV2 Stream Networks 
-Version: 0.0.0.9000
+Version: 1.0.0.000
 Authors@R: person("Darin", "Kopp", email = "darinkopp@gmail.com", role = c("aut", "cre"))
-Description: Chracterizing Topology and Planform Geometry of NHDPlusV2 Stream 	Networks is initiated by a set of user defined sampling points or a 		random sample of stream reaches of a specified order. From the sites, 	all upstream tributaries are identified and assembled into indvidual 			networks.  All subsequent functions are excuted with these networks as 	inputs and are categorized into Network-Scale Topology, Path-Scale         	Position (Currently Unavailable), Reach-Scale Planform Geometry and     
-   	NHDPlusV2 Value-Added Attribute and StreamCat Attribute (Currently 		Unavailable) Queries. Catchments associated with each reach can also be 	identified and be used 	to allocate other potential covariates of 		interest at different scales.
+Description: An R package to derive covariates from the NHDPlusV2 dataset and faciliate continental scale analyses of river networks.
 Depends: R (>= 3.4.2)
 License: Ask Mike
 Encoding: UTF-8
@@ -13,5 +12,9 @@ Imports: foreign,
     sp,
     rgdal,
     rgeos,
-    dplyr
+    dplyr,
+    reshape2
 RoxygenNote: 6.1.0
+Suggests: knitr,
+    rmarkdown
+VignetteBuilder: knitr
