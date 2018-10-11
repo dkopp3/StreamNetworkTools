@@ -2,29 +2,43 @@
 % Please edit documentation in R/net_flow.R
 \name{net_flow}
 \alias{net_flow}
-\title{Network Discharge (Q0001E) Summary}
+\title{Network Discharge and Veolcity Summary}
 \usage{
 net_flow(nhdplus_path, vpu, netdelin)
 }
 \arguments{
-\item{nhdplus_path}{directory containing NHDPlus
-see(\code{\link{net_nhdplus}})}
+\item{nhdplus_path}{Directory for NHDPlusV2 files (\code{\link{net_nhdplus}})}
 
-\item{vpu}{the vector processing unit}
+\item{vpu}{NHDPlusV2 Vector Processing Unit}
 
 \item{netdelin}{output from \code{\link{net_delin}}}
 }
 \value{
-\code{RUNOFFVC}cumulative mean annual runoff (mm) and EROM velociety
- (V0001E) at network outlet; Mean Annual discharge (\code{MAQ0001E}), min
- mean monthly dischagre (\code{minMMQ0001E}), maximum monthly discharge
- (\code{maxMMQ0001E}) and coeffficient of variation of mean monthly discharge
- (\code{covMMQ0001E}) were EROM estimations scaled by mvalue of sampling
- point of mean mean annual discharge;
+\code{data.frame}: \code{$RUNOFFVC} cumulative mean annual runoff
+ (mm); \code{$MAQ0001E} Mean Annual discharge (cf); \code{$minMMQ0001E}
+ minimum mean monthly discharge; \code{$maxMMQ0001E} maximum mean monthly
+ discharge (cf);\code{$covMMQ0001E} coeffficient of variation of mean monthly
+ discharge; \code{$V0001E} mean annual velocity (cfs); \code{minMMV0001E}
+ minimum mean monthly velocity (cfs) \code{maxMMV0001E} maximum mean monthly
+ velocity;\code{covMMV0001E} coefficient of variation in mean monthly velocity
+ estimates.
 }
 \description{
-Network Discharge (Q0001E) Summary
+Network flow summaries derived form NHDPlusV2 EROM mean annual and mean
+monthly discharge (Q0001E) and velocity (V0001E) estimates
+}
+\details{
+Requires /VPUAttributeExtension directory see (\code{\link{net_nhdplus}})
+
+If M value is supplied, discharge (Q0001E) values are scaled proportionally.
+Velocity (V0001E) and RUNOFFVC are values for COMID outlet
+\code{\link{net_delin}}
 }
 \examples{
-f <- net_flow(netdelin = c, vpu = "01", nhdplus_path = getwd())
+# identify NHDPlusV2 COMID
+a <- net_sample(nhdplus_path = getwd(), vpu = "01", ws_order = 6, n = 5)
+# delineate stream network
+b <- net_delin(group_comid = as.character(a[,"COMID"]), nhdplus_path = getwd(), vpu = "01")
+# derive discharge and velocity estimates
+c <- net_flow(netdelin = b, vpu = "01", nhdplus_path = getwd())
 }

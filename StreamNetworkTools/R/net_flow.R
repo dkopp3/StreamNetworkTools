@@ -1,23 +1,34 @@
-#'Network Discharge (Q0001E) Summary
+#' Network Discharge and Veolcity Summary
 #'
-#'Requires "/VPUAttributeExtension"
-#'directory see(\code{\link{net_nhdplus}}) will scale value by measure value
-#'from \code\{link{net_delin}}
+#' Network flow summaries derived form NHDPlusV2 EROM mean annual and mean
+#' monthly discharge (Q0001E) and velocity (V0001E) estimates
+#'
+#' Requires /VPUAttributeExtension directory see (\code{\link{net_nhdplus}})
+#'
+#' If M value is supplied, discharge (Q0001E) values are scaled proportionally.
+#' Velocity (V0001E) and RUNOFFVC are values for COMID outlet
+#' \code{\link{net_delin}}
 #'
 #'@param netdelin output from \code{\link{net_delin}}
-#'@param vpu the vector processing unit
-#'@param nhdplus_path directory containing NHDPlus
-#'  see(\code{\link{net_nhdplus}})
+#'@param vpu NHDPlusV2 Vector Processing Unit
+#'@param nhdplus_path Directory for NHDPlusV2 files (\code{\link{net_nhdplus}})
 #'
-#'@return \code{RUNOFFVC}cumulative mean annual runoff (mm) and EROM velociety
-#'  (V0001E) at network outlet; Mean Annual discharge (\code{MAQ0001E}), min
-#'  mean monthly dischagre (\code{minMMQ0001E}), maximum monthly discharge
-#'  (\code{maxMMQ0001E}) and coeffficient of variation of mean monthly discharge
-#'  (\code{covMMQ0001E}) were EROM estimations scaled by mvalue of sampling
-#'  point of mean mean annual discharge;
+#'@return \code{data.frame}: \code{$RUNOFFVC} cumulative mean annual runoff
+#'  (mm); \code{$MAQ0001E} Mean Annual discharge (cf); \code{$minMMQ0001E}
+#'  minimum mean monthly discharge; \code{$maxMMQ0001E} maximum mean monthly
+#'  discharge (cf);\code{$covMMQ0001E} coeffficient of variation of mean monthly
+#'  discharge; \code{$V0001E} mean annual velocity (cfs); \code{minMMV0001E}
+#'  minimum mean monthly velocity (cfs) \code{maxMMV0001E} maximum mean monthly
+#'  velocity;\code{covMMV0001E} coefficient of variation in mean monthly velocity
+#'  estimates.
 #'
 #' @examples
-#' f <- net_flow(netdelin = c, vpu = "01", nhdplus_path = getwd())
+#' # identify NHDPlusV2 COMID
+#' a <- net_sample(nhdplus_path = getwd(), vpu = "01", ws_order = 6, n = 5)
+#' # delineate stream network
+#' b <- net_delin(group_comid = as.character(a[,"COMID"]), nhdplus_path = getwd(), vpu = "01")
+#' # derive discharge and velocity estimates
+#' c <- net_flow(netdelin = b, vpu = "01", nhdplus_path = getwd())
 #'@export
 
 net_flow <- function (nhdplus_path, vpu, netdelin){
@@ -28,6 +39,7 @@ net_flow <- function (nhdplus_path, vpu, netdelin){
     clim.dir <- grep(paste(vpu, "/VPUAttributeExtension", sep = ""),
                    list.dirs(nhdplus_path, full.names = T),
                    value = T)
+
   # Runofff and discharge CUMMA...
     ROMA.files <- grep("CumTotROMA", list.files(clim.dir[1], full.names = T), value = T)
     ROMA <- read.table(ROMA.files, header = T, sep = ",")
@@ -83,8 +95,8 @@ cumtot <- erom_dat[as.character(erom_dat[ ,"net.comid"]) == as.character(erom_da
 #scaled by Mvalue
 cumtot$M_scale0001E <- (cumtot[,"Q0001E"] - cumtot[,"QINCR0001E"]) + (cumtot[,"QINCR0001E"] * cumtot[,"M"])
 
-MA <- cumtot[cumtot[,"month"]=="MA",c("net.id","M_scale0001E")]
-names(MA) <- c("net.id", "MAQ0001E")
+MA <- cumtot[cumtot[,"month"]=="MA",c("net.id","M","M_scale0001E")]
+names(MA) <- c("net.id", "M", "MAQ0001E")
 minMM <- aggregate(cumtot[cumtot[,"month"] != "MA",("M_scale0001E")],
                 by = list(cumtot[cumtot[,"month"] != "MA","net.id"]), min)
 names(minMM) <- c("net.id","minMMQ0001E")

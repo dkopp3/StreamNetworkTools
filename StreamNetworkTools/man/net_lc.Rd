@@ -9,21 +9,26 @@ net_lc(netdelin, vpu, nhdplus_path)
 \arguments{
 \item{netdelin}{output from \code{\link{net_delin}}}
 
-\item{vpu}{vector processing unit}
+\item{vpu}{NHDPlusV2 Vector Processing Unit}
 
-\item{nhdplus_path}{directory containing NHDPlus
-see(\code{\link{net_nhdplus}})}
+\item{nhdplus_path}{Directory for NHDPlusV2 files (\code{\link{net_nhdplus}})}
 }
 \value{
-\code{data.frame} with NLCD2011 classification codes. Dee
-  \url{https://www.mrlc.gov/nlcd11_leg.php} for definitions
+\code{data.frame} of NLCD2011 classification codes
+  (\url{https://www.mrlc.gov/nlcd11_leg.php}). Each record is percentage of
+  catchment area
 }
 \description{
-Network scale landcover percentages
+Percent of watershed covered by NLCD2011 landcover class
 }
 \details{
 Requires VPUAttributeExtension directory see(\code{\link{net_nhdplus}})
 }
 \examples{
-net_lc(netdelin = c, vpu = "01", nhdplus_path = getwd())
+#identify sample comid
+a <- net_sample(nhdplus_path = getwd(), vpu = "01", ws_order = 6, n = 5)
+#delineate stream network
+b <- net_delin(group_comid = as.character(a[,"COMID"]), nhdplus_path = getwd(), vpu = "01")
+#calculate NLCD2011 Landcover summaries
+net_lc(netdelin = b, vpu = "01", nhdplus_path = getwd())
 }

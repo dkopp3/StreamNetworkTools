@@ -1,22 +1,21 @@
-#' Random Stream Network Roots
+#' Random NHDPlusV2 COMID
 #'
-#' Extracts random COMID's of a specified Strahler order
-#' from a vector processing unit. Can serve as root node
-#' for steam network (see \code{\link{net_delin}}).
+#' Generates random COMID vector of a specified Strahler order. Can serve as
+#' root of steam network (see \code{\link{net_delin}}).
 #'
 #' \code{"./NHDPlus"} must be a subdirectory of \code{nhdplus_path}.
 #'
 #' NHDPlusAttributes and NHDSnapshot are required NHDlus downloads (see \code{\link{net_nhdplus}})
 #'
-#' @param nhdplus_path character specfiying the directory for downloaded files
-#'   \code{\link{net_nhdplus}}
-#' @param vpu the NHDPlus V2 vector processing unit
-#' @param ws_order the strahler order of selected COMID's
+#' @param nhdplus_path directory for NHDPlusV2 files \code{\link{net_nhdplus}}
+#' @param vpu NHDPlus V2 vector processing unit
+#' @param ws_order Strahler order of desired COMID
 #' @param n number of COMID's selected
 #'
-#' @return vector of COMID's of specified Strahler order
+#' @return vector of NHDPlusV2 COMID's.
+#'
 #' @examples
-#' net_sample(nhdplus_path=getwd(),vpu = "01", ws_order = 6, n = 5)
+#' net_sample(nhdplus_path=getwd(), vpu = "01", ws_order = 6, n = 5)
 #' @export
 
 net_sample <- function (nhdplus_path, vpu, ws_order, n){

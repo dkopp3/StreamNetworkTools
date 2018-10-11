@@ -15,10 +15,8 @@ help(package ="StreamNetworkTools")
 # here we are using VPU 11 which includes Arkansas, Red and White River basins
 # check function documentation for further details
 # setwd to example folder - where NHDPlusV2 data will be downloaded
-
 setwd("C:/Users/Darin/Dropbox/Dissertation/Chapter_2_StreamNetworkTools/StreamNetworkTools_git/Example_Data")
 
-# check documentation
 # net_nhdplus
 # can download all available data for vpu but sppecified only files needed to run streamNetworkTools
 # this can be time consuming, be patient it only has to be done once
@@ -56,47 +54,73 @@ rmd_netdelin <- net_delin(group_comid = as.character(rmd_comid),
                           nhdplus_path = getwd(),
                           vpu = "11")
 # output is list of 3
-str(rmd_netdelin)
-
+# Network is data.frame. group.comid indexes a Network
+# and net.comid are their asociated COMID's
 # can write network as shapefile with
 library(sf)
 write_sf(rmd_netdelin$SF_Obj, paste(getwd(),"/rmd_netdelin.shp", sep = ""))
+str(rmd_netdelin)
+
+# can also "snap" user defined points to nearest NHDPlusV2 flowline
+# this could be useful for working with national scale datasets (WAS, NARS, BioData)
+# prep sample points
+ExLoc <- read.csv("Sample_Locations.csv")
+head(ExLoc)
+# Locations must be renamed as follows, kind of annoying
+ExLoc <- ExLoc[,c("SiteName","W","N")]
+names(ExLoc) <- c("SITE_ID","X","Y")
+
+# finding closest COMID
+sam_pts <- net_comid(sample_points = ExLoc, CRS = 4269,
+                     nhdplus_path = getwd(), vpu = 11, maxdist = 200)
+head(sam_pts)
 
 # value added attribute queries for NHDPlusV2
+# should be able to interchange sam_pts and rmd_netdelin in all following functions
 # landcover percentage are for sub-catchments
 rmd_netlc <- net_lc(netdelin = rmd_netdelin, vpu = "11", nhdplus_path = getwd())
 # field headings follow https://www.mrlc.gov/nlcd11_leg.php
 head(rmd_netlc)
 
 # climate variables follow world clim, bioclim variables and were calculated from 1971-2001 PRISM
-# where necessary units are in tempp in deg C and ppt in mm
+# where necessary units are in temp in deg C and ppt in mm
 rmd_netclim <- net_clim (nhdplus_path = getwd(), vpu = "11", netdelin = rmd_netdelin)
 head(rmd_netclim)
 
-# flow variables were calculated using the Mean Annual and Mean Monthly EROM
+# flow variables were calculated using the Mean Annual and Mean Monthly flow estimates from NHDPlusV2 EROM
 rmd_netflow <- net_flow(nhdplus_path = getwd(), vpu = "11", netdelin = rmd_netdelin)
 head(rmd_netflow)
 
-# network scale topology
+# network scale topology: counts headwaters, nodes, trib juntions, edges
+# catchment area and total length and drainage density
 rmd_netclac <- net_calc(netdelin = rmd_netdelin, vpu = "11", nhdplus_path = getwd())
 head(rmd_netclac)
 
-# net_hort M values are not included here
+# net_hort determines horton laws for networks
+# produces a list: topology are means for each stream order
+# horton est and the estimated hortonian ratios
 rmd_nethort <- net_hort(netdelin = rmd_netdelin, vpu = "11", nhdplus_path = getwd())
-str(rmd_nethort)
+#str(rmd_nethort)
 
-# net sinu gives values for each reach (comid) within a network
+# net sinu gives sinusity and slope values for each reach (comid) within a network
 rmd_netsinu <- net_sinu (netdelin = rmd_netdelin, nhdplus_path = getwd(), vpu = "11")
 head(rmd_netsinu)
 
-# can be aggregated as a network mean
+# can be aggregated as a network-scale mean
 mean.sinu <- aggregate(rmd_netsinu[,"sinuosity"],
-                       by = list(group.comid = rmd_netsinu[,"group.comid"]),
+                       by = list(net.id = rmd_netsinu[,"net.id"]),
                        mean)
 head(mean.sinu)
 
-# net_conflu resullts are given by each confluence
-# this takes a while - ended
-#rmd_netconflu <- net_conflu(netdelin = rmd_netdelin,
- #                           nhdplus_path = getwd(),
-  #                          vpu = "11")
+# net_conflu results are given for each confluence
+# this takes a while
+rmd_netconflu <- net_conflu(netdelin = rmd_netdelin, nhdplus_path = getwd(), vpu = "11")
+head(rmd_netconflu)
+
+#net_cat
+rmd_netcat <- net_cat(netdelin = rmd_netdelin, nhdplus_path = getwd(), vpu = "11", dissolve = "N")
+str(rmd_netcat)
+
+#basin shape metrics
+rmd_catshp <- cat_shp(rmd_netcat)
+head(rmd_catshp)

@@ -2,7 +2,7 @@
 % Please edit documentation in R/net_delin.r
 \name{net_segid}
 \alias{net_segid}
-\title{Identify Network Segments}
+\title{Identify Network Segments (Deprecated)}
 \usage{
 net_segid(netdelin, nhdplus_path, vpu)
 }

@@ -1,39 +1,53 @@
 #' Network Delineation
 #'
-#' Delineates stream network upstream of root NHDPlus COMID (see
-#' \code{\link{net_sample}} or \code{\link{net_comid}} or
-#' \url{http://www.horizon-systems.com/NHDPlus/NHDPlusV2_data.php}) via upstream
-#' navigation
+#' Identifies all flowlines within a stream network upstream of a NHDPlusV2
+#' COMID (see \code{\link{net_sample}} or \code{\link{net_comid}}.
+#'
+#' see NHDPlusV2 Documentation
+#' \url{http://www.horizon-systems.com/NHDPlus/NHDPlusV2_data.php})
 #'
 #' Requires /NHDPlusAttributes and NHDSnapshot directories (see
 #' \code{\link{net_nhdplus}})
 #'
-#' All input group comids are delineated. If nested comids are unexpected or
-#' unwanted, remove from \code{$SF_Obj} and \code{$Network} before proceeding
+#' All input COMID are delineated. Nested COMIDs occur when two input comid are
+#' in the same network. If nested comids are unexpected or unwanted, remove from
+#' \code{$SF_Obj} and \code{$Network} before proceeding
 #'
-#' @param group_comid a vector of NHDPlus COMIDs
-#' @param nhdplus_path nhdplus_path directory for downloaded NHDPlus files
-#'   (\code{\link{net_nhdplus}})
-#' @param vpu vector processing unit
-#' @param M Indcates position of samppling point on flowline for geach group
-#'   COMID generated from \code{\link{net_comid}}
-#' @param snap_xy corrdinates of M, if supplied network will be truncated at
-#'   snap_xy point
+#' @param group_comid a vector of NHDPlusV2 COMIDs
+#' @param nhdplus_path Directory for NHDPlusV2 files (\code{\link{net_nhdplus}})
+#' @param vpu NHDPlusV2 Vector Processing Unit
+#' @param M Position of sampling point on COMID (optional). Generated from
+#'   \code{\link{net_comid}}
+#' @param snap_xy coordinates of sampling point on COMID (optional). Generated
+#'   from \code{\link{net_comid}}
 #'
-#' @return netdelin, a named list (\code{$Network, $Nested_COMIDs, $SF_Obj})
-#'   which serves as an argeument for subsequent functions in StreamNetworkTools.
-#'   \code{$Network} stores network comids, \code{Nested_COMIDs} stores comids
-#'   which are in the same network, and SF_Obj is a simple feature object of the
-#'   networks.
+#' @return Named list (\code{$Network, $Nested_COMIDs, $SF_Obj}).\code{$Network}
+#'   stores COMID as data.frame: \code{$Network$group.comid} Root COMID for
+#'   network; \code{$Network$net.comid} COMID's upstream of
+#'   root;\code{$Network$vpu} Vector Processing Unit; \code{$Network$M} Position
+#'   of sampling point on COMID, as proportion of COMID from upstream end;
+#'   \code{$Network$net.id} unique identifier for stream network.
+#'   \code{$Nested_COMIDs} vector of comids in same stream network.
+#'   \code{$SF_Obj} Simple Features Object: \code{$SF_Obj$group.comid} Root
+#'   COMID of network; \code{$SF_Obj$COMID} same as \code{$Network$net.comid}
+#'   COMID's upstream of root; \code{$SF_Obj$VPUID} same as \code{$Network$vpu}
+#'   Vector Processing Unit; \code{$SF_Obj$Meas} same as \code{$Network$M}
+#'   Position of sampling point on COMID; \code{$SF_Obj$Meas} same as
+#'   \code{$Network$net.id} unique identifier for stream network
+#'
 #'
 #' @examples
+#' # process sampling ponits
 #' a <- net_comid(sample_points = z, CRS = 4269, nhdplus_path = getwd(), vpu="01", maxdist = 100)
+#' # or select random networks
+#' a <- net_sample(nhdplus_path = getwd(), vpu = "01", ws_order = 3, n = 5)
+#' # delineate upstream reaches
 #' b <- net_delin(group_comid = as.character(a[,"COMID"]), nhdplus_path = getwd(), vpu = "01")
-#' write_sf(b$SF_Obj...)
+#' #write stream network as shpfile
+#' sf::write_sf(b$SF_Obj,paste(getwd(),"/network.shp"))
 #' @export
 
-net_delin <- function (group_comid, nhdplus_path, vpu, M = NULL, snap_xy=NULL) {
-
+net_delin <- function (group_comid, nhdplus_path = getwd(), vpu, M = NULL, snap_xy = NULL) {
   if(is.character(group_comid) == F){
       stop("group_comid must be character vector")
   }
@@ -186,7 +200,7 @@ net_delin <- function (group_comid, nhdplus_path, vpu, M = NULL, snap_xy=NULL) {
   return(out)
 }
 #-----------------------------------------------------
-#' Identify Network Segments
+#' Identify Network Segments (Deprecated)
 #'
 #' modifies \code{\link{net_delin}} by creating an index (\code{seg.id}) for
 #' multiple comids occuring between confluences

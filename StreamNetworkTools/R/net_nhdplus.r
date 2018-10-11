@@ -1,50 +1,49 @@
-#' NHDPlus VPU Download
+#' NHDPlusV2 Download
 #'
-#' \code{net_nhdplus} downloads and extracts the .7z file from the national
-#' hydrography dataset plus by the vector processing unit specified in its
-#' arguments
+#' Downloads 7-zip files from NHDPlusV2 webpage to "NHDPlus" sub-directory
 #'
-#' 7-zip \url{https://www.7-zip.org/download.html} must be downloaded and
-#' installed for tool to work
+#' 7-zip (\url{https://www.7-zip.org/download.html}) must be installed. Note
+#' location for \code{zip_7} arguement
 #'
-#' \code{dir} creates a new sub-directory "/NHDPlus" to extract data.
+#' see \url{http://www.horizon-systems.com/NHDPlus/NHDPlusV2_documentation.php}
+#' for NHDPlusV2 file names and descriptions. Options for \code{file} argurment
+#' are c("FdrFac", "FdrNull", "FilledAreas", "Hydrodem", "NEDSnapshot",
+#' "EROMExtension", "NHDPlusAttributes", "NHDPlusBurnComponents",
+#' "NHDPlusCatchment", "NHDSnapshotFGDB", "NHDSnapshot", "VogelExtension",
+#' "VPUAttributeExtension", "WBDSnapshot").
 #'
-#' acceptable options for \code{file}: c("FdrFac", "FdrNull", "FilledAreas",
-#' "Hydrodem", "NEDSnapshot", "EROMExtension", "NHDPlusAttributes",
-#' "NHDPlusBurnComponents", "NHDPlusCatchment", "NHDSnapshotFGDB",
-#' "NHDSnapshot", "VogelExtension", "VPUAttributeExtension", "WBDSnapshot"). see
-#' \url{http://www.horizon-systems.com/NHDPlus/NHDPlusV2_documentation.php} for
-#' definitions
-#'
-#' All raster rocessing units (RPU) within the vpu will be downloaded
+#' All raster pprocessing units (RPU) within the vpu will be downloaded and can
+#' take considerable time
 #'
 #' Includes \code{\link[base]{system}} commands which may not work outside
-#' windows OS
+#' Windows OS
 #'
-#' @param nhdplus_path character specfiying the directory for downloaded files
-#' @param download character specifying "http" or "ftp"
-#' @param vpu character vector processing unit for data
-#' @param files character specifying which files to download. "ALL" will
-#'   download full dataset. See Details
-#' @param zip_7 character specifying the location of the 7-zip download
+#' @param nhdplus_path parent directory for download
+#' @param download transfer protocal ("http" or "ftp")
+#' @param vpu NHDPlusV2 Vector Processing Unit
+#' @param files NHDPlusV2 data file names. Default are used for SNT functions.
+#'   See \code{details}
+#' @param zip_7 Location of the 7-zip program
 #'
-#' @return /NHDPlus and subdirectories for NHDPlus V2 data
+#' @return NHDPlusV2 data files are downloaded to "NHDPlus" directory
+#'
 #' @examples
-#' files needed for StreamNetworkTools
-#' net_nhdplus(nhdplus_path=getwd(), download = "http", vpu = "01", files =
+#' net_nhdplus(nhdplus_path = getwd(), download = "http", vpu = "01", files =
 #' c("NHDPlusAttributes", "NHDSnapshot", "NHDPlusCatchment", "VPUAttributeExtension",
 #' "VogelExtension", "EROMExtension"), zip_7 = "C:/Program Files/7-Zip")
 #' @export
 
-net_nhdplus <- function (nhdplus_path=getwd(),
+net_nhdplus <- function (nhdplus_path = getwd(),
                          download = "http",
                          vpu = "01",
-                         files = "ALL",
+                         files = c("NHDPlusAttributes", "NHDSnapshot",
+                                   "NHDPlusCatchment", "VPUAttributeExtension",
+                                   "VogelExtension", "EROMExtension"),
                          zip_7 = "C:/Program Files/7-Zip") {
-  #save wd for reset
+  # save wd for reset
   old_wd <- getwd()
-  #Othertools will look for NHDPlus folder therefore i hard coded it here
-  #check if there is a NHDPlus sub-directory in the desired parent directory
+  # Othertools will look for NHDPlus folder
+  # check if there is a NHDPlus sub-directory in the desired parent directory
   if(all(basename(list.dirs((nhdplus_path))) != "NHDPlus")){
     dir.create(paste(nhdplus_path, "/NHDPlus", sep = ""))
     nhdplus_path <- paste(nhdplus_path, "/NHDPlus", sep = "")

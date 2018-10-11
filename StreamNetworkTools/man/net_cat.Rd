@@ -2,37 +2,48 @@
 % Please edit documentation in R/net_cat.r
 \name{net_cat}
 \alias{net_cat}
-\title{Identify NHDPlus Catchment}
+\title{NHDPlus Catchment}
 \usage{
 net_cat(netdelin, vpu, nhdplus_path, dissolve)
 }
 \arguments{
 \item{netdelin}{output form \code{link{net_delin}}}
 
-\item{vpu}{the vector processing unit}
+\item{vpu}{NHDPlusV2 Vector Processing Unit}
 
-\item{nhdplus_path}{the directory containing NHDPlus data see(\code{net_nhdplus})}
+\item{nhdplus_path}{Directory containing NHDPlusV2 see (\code{net_nhdplus})}
 
-\item{dissolve}{collapse subcatchments to create a single network catchmet \code{(Y/N)}}
+\item{dissolve}{dissolve catchments \code{(Y/N)}}
 }
 \value{
-named list: \code{$sf_obj} is simple features object and \code{$na_cat} records
-  comid's without catchment
+named list: \code{$sf_obj} is simple features object;
+  \code{$group.comid} root COMID of network; \code{$net.comid} COMID upstream
+  of root COMID; \code{vpu} NHDPlusV2 Vector Processing Unit. \code{$na_cat}
+  contains comids without catchment \code{$na_cat} records comid's without
+  catchment (see Details)
 }
 \description{
-Extracts NHDPlus flowline catchments with optional dissolve
+Identifies catchments associated with network COMID
 }
 \details{
-Ploygons can be used to associate landscape attributes not included with
-NHDPlus
+catchment ploygons can be used to associate landscape attributes to NHDPlusV2
+flowlines (COMID).
 
 Requires NHDPlusCatchment directory
 
-Some comid's do not have matching catchment (featureID) and some catchments
-do not have matching comid's (see
-\url{http://www.horizon-systems.com/NHDPlus/NHDPlusV2_documentation.php})
+see
+(\url{http://www.horizon-systems.com/NHDPlus/NHDPlusV2_documentation.php})
+for information about Watershed boundary dataset and its use in NHDPlusV2
+Only catchments matching network COMID are returned in sf object
 }
 \examples{
-d <- net_cat(netdelin = c, vpu = "01", nhdplus_path = getwd(), dissolve = "Y")
-plot(st_geometry(d$sf_obj))
+#' # identify NHDPlusV2 COMID
+a <- net_sample(nhdplus_path = getwd(), vpu = "01", ws_order = 6, n = 5)
+# delineate stream network
+b <- net_delin(group_comid = as.character(a[,"COMID"]), nhdplus_path = getwd(), vpu = "01")
+C <- net_cat(netdelin = b, vpu = "01", nhdplus_path = getwd(), dissolve = "N")
+#plot catchments
+plot(st_geometry(c$sf_obj))
+#write sf object as shapefile
+sf::write(c$sf_obj, paste(getwd(),"c.shp",sep = ""))
 }

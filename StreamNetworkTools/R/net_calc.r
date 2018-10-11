@@ -1,32 +1,32 @@
-#' Network Topology
+#' Network Topology Metrics
 #'
-#' Calculates metrics related to stream network topology see \code{Value}
+#' Calculates stream network topology metrics
 #'
 #' Requires /NHDPlusAttributes directory (see \code{\link{net_nhdplus}})
 #'
-#' Warning: "Check drain.dia. Incomplete headwater path 5848788 at COMID 5848656
-#' in network 5848066 perhaps due to waterbody" may indicate that
-#' drain.dia is flawed by the presence of a waterbody in the network
+#' Length and area measures are scaled by M values
 #'
 #' @param netdelin output from \code{net_delin}
-#' @param vpu vector processing unit
-#' @param nhdplus_path directory containing NHDPlusV2 \code{\link{net_nhdplus}}
+#' @param vpu NHDPlusV2 Vector Processing Unit
+#' @param nhdplus_path Directory for NHDPlusV2 files (\code{\link{net_nhdplus}})
 #'
-#' @return a \code{data.frame}: \code{COMID} of network root node; \code{vpu}
-#'    vector processing unit; \code{maxelev} max elevation of network flowline (cm);
-#'   \code{minelev} min elevation of network flowline (cm); \code{releif}
-#'   (\code{maxelev} - \code{minelev}); \code{drain.dia} drainage diameter
-#'   (longest flowpath in network); \code{head.h2o} number of terminal nodes
-#'   (i.e. headwaters); \code{trib.jun} number of tributary junctions
-#'   (\code{head.h2o} - 1); \code{AREASQKM} drainage area (km^2);
-#'   \code{LENGTHKM} total lenght of network flowlines; \code{drain.den}
-#'   drainage density (\code{LENGTHKM} / \code{AREASQKM}); \code{WS.ord}
-#'   strahler order for root node; \code{reach.cnt} number of valley segments
-#'   (edges); \code{diver.cnt} count of divergent flow paths
+#' @return \code{data.frame}: \code{$group.comid} stream network root COMID;
+#'   \code{$vpu} NHDPlusV2 vector processing unit;\code{M} Position of sampling
+#'   point on COMID, as proportion of COMID from upstream end; \code{WS.ord}
+#'   strahler order for root node;\code{$head.h2o} number of headwater reaches;
+#'   \code{$trib.jun} number of tributary junctions; \code{reach.cnt} number of
+#'   reaches in network; \code{diver.cnt} count of divergent flow paths;
+#'   \code{$AREASQKM} drainage area (km^2); \code{$LENGTHKM} total lenght of
+#'   network flowlines (km); \code{drain.den} drainage density (\code{LENGTHKM}
+#'   / \code{AREASQKM})
 #'
 #' @examples
-#' g <- net_calc(netdelin = c, vpu = "01", nhdplus_path = getwd())
-#'
+#' # identify NHDPlusV2 COMID
+#' a <- net_sample(nhdplus_path = getwd(), vpu = "01", ws_order = 6, n = 5)
+#' # delineate stream network
+#' b <- net_delin(group_comid = as.character(a[,"COMID"]), nhdplus_path = getwd(), vpu = "01")
+#' calculate topology summary
+#' c <- net_calc(netdelin = b, vpu = "01", nhdplus_path = getwd())
 #' @export
 
 net_calc <- function(netdelin, vpu, nhdplus_path){
@@ -96,7 +96,7 @@ net_calc <- function(netdelin, vpu, nhdplus_path){
                          c("net.id", "net.comid", "group.comid")]
 
     diver.cnt <- aggregate(div.rm[, "group.comid"],
-                           by = list(div.rm[,"net.id"], div.rm[, "group.comid"]),
+                           by = list(div.rm[,"net.id"]),
                            length)
 
     names(diver.cnt) <- c("net.id", "diver.cnt")
@@ -141,6 +141,8 @@ net_calc <- function(netdelin, vpu, nhdplus_path){
   data.out <- Reduce(function(x, y)
     merge(x, y, by = "net.id", all.x = T),
     list(data.out, WS.ord,head.h2o, reach.cnt, diver.cnt, cat.area))#, relief))
+
+  names(data.out)[2] <- "group.comid"
 
   return(data.out)
 }

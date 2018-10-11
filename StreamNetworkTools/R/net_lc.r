@@ -1,19 +1,24 @@
 #' NLCD2011 Landcover Percentages
 #'
-#' Network scale landcover percentages
+#' Percent of watershed covered by NLCD2011 landcover class
 #'
 #' Requires VPUAttributeExtension directory see(\code{\link{net_nhdplus}})
 #'
 #' @param netdelin output from \code{\link{net_delin}}
-#' @param vpu vector processing unit
-#' @param nhdplus_path directory containing NHDPlus
-#'   see(\code{\link{net_nhdplus}})
+#' @param vpu NHDPlusV2 Vector Processing Unit
+#' @param nhdplus_path Directory for NHDPlusV2 files (\code{\link{net_nhdplus}})
 #'
-#' @return \code{data.frame} with NLCD2011 classification codes. Dee
-#'   \url{https://www.mrlc.gov/nlcd11_leg.php} for definitions
+#' @return \code{data.frame} of NLCD2011 classification codes
+#'   (\url{https://www.mrlc.gov/nlcd11_leg.php}). Each record is percentage of
+#'   catchment area
 #'
 #' @examples
-#' net_lc(netdelin = c, vpu = "01", nhdplus_path = getwd())
+#' #identify sample comid
+#' a <- net_sample(nhdplus_path = getwd(), vpu = "01", ws_order = 6, n = 5)
+#' #delineate stream network
+#' b <- net_delin(group_comid = as.character(a[,"COMID"]), nhdplus_path = getwd(), vpu = "01")
+#' #calculate NLCD2011 Landcover summaries
+#' net_lc(netdelin = b, vpu = "01", nhdplus_path = getwd())
 #' @export
 
 net_lc <- function(netdelin, vpu, nhdplus_path){
@@ -53,8 +58,11 @@ net_lc <- function(netdelin, vpu, nhdplus_path){
   #NLCD values are cum_values
   NLCD.2011 <- NLCD.2011[as.character(NLCD.2011[, "net.comid"]) ==
                            as.character(NLCD.2011[, "group.comid"]), -c(1, 85)]
-  NLCD.2011 <- NLCD.2011[, names(NLCD.2011)[grep('CT', names(NLCD.2011), invert = T)],]
-  NLCD.2011 <- NLCD.2011[, names(NLCD.2011)[grep('AC', names(NLCD.2011), invert = T)],]
-  data.out <- merge(data.out, NLCD.2011[,-c(23,24)], by="net.id",all.x = T)
+  NLCD.2011 <- NLCD.2011[, names(NLCD.2011)[grep('CT', names(NLCD.2011), invert = T)], ]
+  NLCD.2011 <- NLCD.2011[, names(NLCD.2011)[grep('AC', names(NLCD.2011), invert = T)], ]
+  data.out <- merge(data.out, NLCD.2011[,-c(23,24)], by = "net.id", all.x = T)
+  # above joins two "group.comid" fields. need to remove and rename
+  data.out <- data.out[, -c(3) ]
+  names(data.out)[2] <- "group.comid"
   return(data.out)
 }

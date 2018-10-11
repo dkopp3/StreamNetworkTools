@@ -7,19 +7,26 @@
 cat_shp(netcat)
 }
 \arguments{
-\item{netcat}{output from \code{net_delin}}
+\item{netcat}{output from \code{\link{net_cat}}}
 }
 \value{
-a \code{data.frame}: \code{group.comid} of network root node; \code{net.comid}
-  network flowline comid; and basin.len which is basin lenght
+\code{data.frame}: \code{group.comid} root COMID of network;
+  \code{net.comid} COMID upstream of root COMID, indexes catchments;
+  \code{$basin_len} length of basin, longest distance between two catchment
+  vertices; \code{$basin_area} area of catchment; \code{$basin_width}
+  basin_area / basin_len
 }
 \description{
-Calculates metrics related to catchment \code{Value}
-}
-\details{
-Requires netcat object (see \code{\link{net_cat}})
+Calculates metrics related to catchment shape very slowly.
 }
 \examples{
-g <- cat_shp(netcat = c, vpu = "01", nhdplus_path = getwd())
+# identify NHDPlusV2 COMID
+a <- net_sample(nhdplus_path = getwd(), vpu = "01", ws_order = 6, n = 5)
+# delineate stream network
+b <- net_delin(group_comid = as.character(a[,"COMID"]), nhdplus_path = getwd(), vpu = "01")
+#identify catchments
+c <- net_cat(netdelin = b, vpu = "01", nhdplus_path = getwd(), dissolve = "N")
+calculate basin shape
+d <- cat_shp(netcat = c, vpu = "01", nhdplus_path = getwd())
 
 }

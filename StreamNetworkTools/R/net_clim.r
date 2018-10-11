@@ -1,43 +1,50 @@
-#' Network Climate Summary
+#' Network Climate Metrics
 #'
-#' network scale summeries of bioclim
-#' (\url{http://www.worldclim.org/bioclim}) variables
+#' Climate metrics derived from PRISM 1971-2001 mean monthly and mean annual
+#' temperature and precipitation normals in NHDPlusV2 value added attribure
+#' extension tables
+#'
+#' See (\url{http://www.worldclim.org/bioclim}) for more informaton on climate
+#' metrics
 #'
 #' Requires "/VPUAttributeExtension" directory see(\code{\link{net_nhdplus}})
 #'
 #' @param netdelin output from \code{\link{net_delin}}
-#' @param vpu the vector processing unit
-#' @param nhdplus_path directory containing NHDPlus
-#'   see(\code{\link{net_nhdplus}})
+#' @param vpu NHDPlusV2 Vector Processing Unit
+#' @param nhdplus_path Directory for NHDPlusV2 files (\code{\link{net_nhdplus}})
 #'
-#'@return \code{data.frame} containing: \code{COMID} root node of network;
-#'  \code{vpu} vector processing unit; \code{MISSDATAA.Temp} area of missing
-#'  temperature data; \code{TEMPVC} mean annual temperature (deg C); \code{seasonality_t}
-#'  Coefficient of variation of mean monthly temperatures; \code{warm_mo} warmest
-#'  month; \code{warm_mo_t} mean temperature of warmest month; \code{cold_mo}
-#'  coldest month; \code{cold_mo_t} mean temperature of coldest month;
-#'  \code{diff_t} temperature difference between warm and cold monthly
-#'  temperatures; \code{warm_q_t} mean temperature of warmest quarter;
-#'  \code{warm_q}  warmest quarter; \code{cold_q_t} mean temperature of coldest
-#'  quarter; \code{cold_q} coldest quarter; \code{MISSDATAA.Ppt} area of missing
-#'  precipitation data; \code{PRECIPVC} cumulative mean annual precipiration (mm);
-#'  \code{wet_mo} wettest month; \code{wet_mo_p} cumulative mean precipitation
-#'  of wettest month; \code{dry_mo} driest month; \code{dry_mo_p} cumulative
-#'  mean precipitation of driest month; \code{seasonality_p} coefficient of
-#'  vatiation of mean monthly precipitation; \code{wet_q_p} cumulaltive mean
-#'  precipitation of wettest quarter; \code{wet_q} wettest quarter;
-#'  \code{dry_q_p} cumulaltive mean precipitation of driest quarter; \code{dry_q}
-#'  driest quarter; \code{dry_q_t} mean temperature of driest quarter;
-#'  \code{wet_q_t} mean temperature of wettest quarter; \code{warm_q_p}
-#'  cumulaltive mean precipitation of warmest quarter; \code{cold_q_p}
-#'  cumulaltive mean precipitation of coldest quarter; \code{RUNOFFVC}
-#'  cumulative mean annual runoff (mm); \code{MAFLOWV} Vogal Estimation of mean
-#'  annual discharge; \code{MAVELV} Vogal estimation of mean annual velocity at
-#'  network outlet; \code{Q0001E} EROM estimation of mean mean annual
-#'  discharge; \code{V0001E} EROM estimation of mean annual velocity
+#' @return \code{data.frame}: \code{$net.id} Unique identifier of network;
+#'   \code{$group.comid} Root COMID of network; \code{$vpu} NHDPlusV2 Vector
+#'   Processing Unit; \code{$MISSDATAA.x} area of missing temperature data;
+#'   \code{$TEMPVC} mean annual temperature (deg C); \code{$seasonality_t}
+#'   Coefficient of variation of mean monthly temperatures; \code{$warm_mo}
+#'   2-digit warmest month; \code{$warm_mo_t} mean temperature of warmest month;
+#'   \code{$cold_mo} 2-digit coldest month; \code{$cold_mo_t} mean temperature
+#'   of coldest month; \code{$diff_t} difference between warm and cold monthly
+#'   temperatures; \code{$warm_q_t} mean temperature of warmest quarter;
+#'   \code{$warm_q} 2-digit warmest quarter; \code{$cold_q_t} mean temperature
+#'   of coldest quarter; \code{$cold_q} 2-digit coldest quarter;
+#'   \code{MISSDATAA.y} area of missing precipitation data; \code{$PRECIPVC}
+#'   cumulative mean annual precipiration (mm); \code{$wet_mo} 2-digit wettest
+#'   month; \code{$wet_mo_p} cumulative mean precipitation of wettest month;
+#'   \code{$dry_mo} 2-digit driest month; \code{$dry_mo_p} cumulative mean
+#'   precipitation of driest month; \code{$seasonality_p} coefficient of
+#'   vatiation of mean monthly precipitation; \code{$wet_q_p} cumulaltive mean
+#'   precipitation of wettest quarter; \code{$wet_q} 2-digit wettest quarter;
+#'   \code{$dry_q_p} cumulaltive mean precipitation of driest quarter;
+#'   \code{dry_q} 2-digit driest quarter; \code{$dry_q_t} mean temperature of
+#'   driest quarter; \code{$wet_q_t} mean temperature of wettest quarter;
+#'   \code{$warm_q_p} cumulaltive mean precipitation of warmest quarter;
+#'   \code{$cold_q_p} cumulaltive mean precipitation of coldest quarter
 #'
 #' @examples
-#' f <- net_clim(netdelin = c,vpu = "01", nhdplus_path = getwd())
+#' # identify NHDPlusV2 COMID
+#' a <- net_sample(nhdplus_path = getwd(), vpu = "01", ws_order = 6, n = 5)
+#' # delineate stream network
+#' b <- net_delin(group_comid = as.character(a[,"COMID"]), nhdplus_path = getwd(), vpu = "01")
+#' # derive climate summary
+#' c <- net_clim(netdelin = b,vpu = "01", nhdplus_path = getwd())
+#'
 #' @export
 
 net_clim<-function(nhdplus_path, vpu, netdelin){

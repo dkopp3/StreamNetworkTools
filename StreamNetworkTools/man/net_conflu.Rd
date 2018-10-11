@@ -11,33 +11,41 @@ net_conflu(netdelin, nhdplus_path, vpu)
 
 \item{nhdplus_path}{directory containing NHDPlusV2 \code{\link{net_nhdplus}}}
 
-\item{vpu}{vector processing unit}
+\item{vpu}{NHDPlusV2 Vector Processing Unit}
 }
 \value{
-\code{data.frame} \code{group.comid} as network identifier;
-  \code{net.comid} as the reach identifier; \code{vpu} as vector processing
-  unit; \code{CRS} is coordinate reference system for \code{X,Y};
+\code{data.frame}: \code{$net.id} unique network identifier;
+  \code{$group.comid} root COMID for network; \code{$net.comid} COMID for
+  upstream reaches \code{$vpu} Vector Processing Unit; \code{$CRS} coordinate
+  reference system; \code{$X} and \code{$Y} confluence coordinates;
   \code{trib_order} order of COMID downstream of confluence;
-  \code{area_ratio} ratio of the darinage areas of each reach in a
-  confluence (i.e. Triburaty Drainage Area / Mainstem Drainage Area);
-  \code{trib_area} the drainage area downstream of confluence;
-  \code{junction_num} is a concatenation of of strahler stream orders of
-  confluence reaches (e.g 11 is concluence of 2 frist orders, and 23 is a
-  second order joining a thrid order); alpha is the avarage tributary
-  junction; \code{complex} indicates complex triburaty junction
+  \code{area_ratio} darinage areas ratios (i.e. Triburaty Drainage Area /
+  Mainstem Drainage Area); \code{trib_area} drainage area upstream of
+  confluence; \code{junction_num} is a concatenation of of strahler stream
+  orders of confluence reaches (e.g 11 is concluence of 2 frist orders, and
+  23 is a second order joining a thrid order); alpha is the angle of
+  (degrees) tributary junction; \code{complex} indicates complex triburaty
+  junction
 }
 \description{
-Calculates metrics related to network confluences see \code{Values}
+Calculates metrics related to network confluences
 }
 \details{
 requires "/NHDPlusAttributes" directory \code{\link{net_nhdplus}}
 
 netdelin projection is transformed to Lambert Conformal Cone (crs = 102004)
-to preserve angles
+to preserve angles Seybold et al. (2017)
 
-See Benda et al. (2004) for Triburaty : Mainstem Drainage Ratio and Seybold et
-al. (2017) for confluence angle calculation
+Complex confluences are given value of NA
+
+CRS examples: \code{CRS = 4269} = NAD83 (see \url{https://epsg.io/4269});
+\code{CRS = 5070} = NAD83/CONUS Albers (see \url{https://epsg.io/5070})
 }
 \examples{
+# identify NHDPlusV2 COMID
+a <- net_sample(nhdplus_path = getwd(), vpu = "01", ws_order = 6, n = 5)
+# delineate stream network
+b <- net_delin(group_comid = as.character(a[,"COMID"]), nhdplus_path = getwd(), vpu = "01")
+# calculate confluence metrics
 h <- net_conflu(netdelin = c, vpu = "01", nhdplus_path = getwd())
 }

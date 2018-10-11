@@ -1,32 +1,41 @@
-#' Identify Nearest NHDPlus COMID
+#' Identify NHDPlusV2 COMID
 #'
-#' Determines the closest NHDPlus COMID within a radius of a sampling point
+#' Identifies NHDPlusV2 COMID closest to sampling point
 #'
-#' NHDSnapshot and NHDPlusAttributes is required NHDlus download (see
+#' NHDSnapshot and NHDPlusAttributes are required NHDlusV2 files (see
 #' \code{\link{net_nhdplus}})
 #'
-#' @param sample_points \code{data.frame} with field names "SITE_ID", "X" and
-#'   "Y" to identify location
-#' @param CRS coordinate reference system of pts (see examples)
-#' @param nhdplus_path directory for downloaded NHDPlus files
-#' @param vpu NHDPlus vector processing unit
+#' CRS examples: \code{CRS = 4269} = NAD83 (see \url{https://epsg.io/4269});
+#' \code{CRS = 5070} = NAD83/CONUS Albers (see \url{https://epsg.io/5070})
+#'
+#' @param sample_points location \code{data.frame}. fields must be ordered and
+#'   named as "SITE_ID", "X" and "Y"
+#' @param CRS coordinate reference system of locations (see Details)
+#' @param nhdplus_path directory for NHDPlusV2 files
+#' @param vpu NHDPlusV2 vector Processing Unit
 #' @param maxdist search radius around points (m)
 #'
-#' @return \code{data.frame} with site identifier (i.e \code{SITE_ID}, \code{X},
-#'   and \code{Y}), x, y coordinates for snapped point (\code{snap_x,snap_y}),
-#'   position on NHDPlus flowline represented as proportion (\code{M}), distance
-#'   from input point (\code{snap_dist}) in meters and \code{COMID} of the
-#'   NHDPlusV2 flowline. \code{GNIS_NAME}, and \code{STREAMORDE} are NHDPlus
-#'   Value Added Attributes and should be used as an aide to confirm COMID is
-#'   correct.  \code{ApproxTOTDASQKM} is drainage area at outlet of flowline and
-#'   and may overestimate drainage area upstream of sampling point.
+#' @return \code{data.frame} with site information (i.e \code{$SITE_ID},
+#'   \code{$X}, and \code{$Y}) and \code{$snap_dist} distance (m) to nearest
+#'   COMID; \code{$snap_x, $snap_y}, coordinates of nearest COMID vertex;
+#'   \code{$M} Position of sampling point on COMID, as proportion of COMID from
+#'   upstream end; \code{COMID} common identifer of NHDPlusV2 flowline;
+#'   \code{GNIS_NAME} Geographic Names Information System name of COMID;
+#'   \code{ApproxTOTDASQKM} drainage area at COMID outlet, may overestimate
+#'   drainage area if \code{$M} < 1; and \code{STREAMORDE} Stream order form
+#'   NHDPlusV2 Value Added Attributes.
 #'
-#' @examples net_comid(sample_points = z, CRS = 4269, nhdplus_path = getwd(), vpu="01", maxdist = 100)
-#'
-#' CRS examples: \code{CRS = 4269} = NAD83 (see
-#' \url{https://epsg.io/4269});\code{CRS = 5070} = NAD83/CONUS Albers (see
-#' \url{https://epsg.io/5070})
+#' @examples
+#' #read example locations from VPU 11
+#' ExLoc <- read.csv("Sample_Locations.csv")
+#' # reorder and rename location data.frame
+#' ExLoc <- ExLoc[,c("SiteName","W","N")]
+#' names(ExLoc) <- c("SITE_ID","X","Y")
+#' #find nearest NHDPlusV2 COMID
+#' sam_pts <- net_comid(sample_points = ExLoc, CRS = 4269,
+#'                      nhdplus_path = getwd(), vpu = 11, maxdist = 200)
 #' @export
+#'
 net_comid <- function(sample_points, CRS, nhdplus_path, vpu, maxdist){
   dir.spatial <- grep(paste(vpu, "/NHDSnapshot/Hydrography", sep = ""),
                       list.dirs(nhdplus_path, full.names = T),

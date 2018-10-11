@@ -2,52 +2,50 @@
 % Please edit documentation in R/net_nhdplus.r
 \name{net_nhdplus}
 \alias{net_nhdplus}
-\title{NHDPlus VPU Download}
+\title{NHDPlusV2 Download}
 \usage{
 net_nhdplus(nhdplus_path = getwd(), download = "http", vpu = "01",
-  files = "ALL", zip_7 = "C:/Program Files/7-Zip")
+  files = c("NHDPlusAttributes", "NHDSnapshot", "NHDPlusCatchment",
+  "VPUAttributeExtension", "VogelExtension", "EROMExtension"),
+  zip_7 = "C:/Program Files/7-Zip")
 }
 \arguments{
-\item{nhdplus_path}{character specfiying the directory for downloaded files}
+\item{nhdplus_path}{parent directory for download}
 
-\item{download}{character specifying "http" or "ftp"}
+\item{download}{transfer protocal ("http" or "ftp")}
 
-\item{vpu}{character vector processing unit for data}
+\item{vpu}{NHDPlusV2 Vector Processing Unit}
 
-\item{files}{character specifying which files to download. "ALL" will
-download full dataset. See Details}
+\item{files}{NHDPlusV2 data file names. Default are used for SNT functions.
+See \code{details}}
 
-\item{zip_7}{character specifying the location of the 7-zip download}
+\item{zip_7}{Location of the 7-zip program}
 }
 \value{
-/NHDPlus and subdirectories for NHDPlus V2 data
+NHDPlusV2 data files are downloaded to "NHDPlus" directory
 }
 \description{
-\code{net_nhdplus} downloads and extracts the .7z file from the national
-hydrography dataset plus by the vector processing unit specified in its
-arguments
+Downloads 7-zip files from NHDPlusV2 webpage to "NHDPlus" sub-directory
 }
 \details{
-7-zip \url{https://www.7-zip.org/download.html} must be downloaded and
-installed for tool to work
+7-zip (\url{https://www.7-zip.org/download.html}) must be installed. Note
+location for \code{zip_7} arguement
 
-\code{dir} creates a new sub-directory "/NHDPlus" to extract data.
+see \url{http://www.horizon-systems.com/NHDPlus/NHDPlusV2_documentation.php}
+for NHDPlusV2 file names and descriptions. Options for \code{file} argurment
+are c("FdrFac", "FdrNull", "FilledAreas", "Hydrodem", "NEDSnapshot",
+"EROMExtension", "NHDPlusAttributes", "NHDPlusBurnComponents",
+"NHDPlusCatchment", "NHDSnapshotFGDB", "NHDSnapshot", "VogelExtension",
+"VPUAttributeExtension", "WBDSnapshot").
 
-acceptable options for \code{file}: c("FdrFac", "FdrNull", "FilledAreas",
-"Hydrodem", "NEDSnapshot", "EROMExtension", "NHDPlusAttributes",
-"NHDPlusBurnComponents", "NHDPlusCatchment", "NHDSnapshotFGDB",
-"NHDSnapshot", "VogelExtension", "VPUAttributeExtension", "WBDSnapshot"). see
-\url{http://www.horizon-systems.com/NHDPlus/NHDPlusV2_documentation.php} for
-definitions
-
-All raster rocessing units (RPU) within the vpu will be downloaded
+All raster pprocessing units (RPU) within the vpu will be downloaded and can
+take considerable time
 
 Includes \code{\link[base]{system}} commands which may not work outside
-windows OS
+Windows OS
 }
 \examples{
-files needed for StreamNetworkTools
-net_nhdplus(nhdplus_path=getwd(), download = "http", vpu = "01", files =
+net_nhdplus(nhdplus_path = getwd(), download = "http", vpu = "01", files =
 c("NHDPlusAttributes", "NHDSnapshot", "NHDPlusCatchment", "VPUAttributeExtension",
 "VogelExtension", "EROMExtension"), zip_7 = "C:/Program Files/7-Zip")
 }

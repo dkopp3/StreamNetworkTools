@@ -2,41 +2,41 @@
 % Please edit documentation in R/net_calc.r
 \name{net_calc}
 \alias{net_calc}
-\title{Network Topology}
+\title{Network Topology Metrics}
 \usage{
 net_calc(netdelin, vpu, nhdplus_path)
 }
 \arguments{
 \item{netdelin}{output from \code{net_delin}}
 
-\item{vpu}{vector processing unit}
+\item{vpu}{NHDPlusV2 Vector Processing Unit}
 
-\item{nhdplus_path}{directory containing NHDPlusV2 \code{\link{net_nhdplus}}}
+\item{nhdplus_path}{Directory for NHDPlusV2 files (\code{\link{net_nhdplus}})}
 }
 \value{
-a \code{data.frame}: \code{COMID} of network root node; \code{vpu}
-   vector processing unit; \code{maxelev} max elevation of network flowline (cm);
-  \code{minelev} min elevation of network flowline (cm); \code{releif}
-  (\code{maxelev} - \code{minelev}); \code{drain.dia} drainage diameter
-  (longest flowpath in network); \code{head.h2o} number of terminal nodes
-  (i.e. headwaters); \code{trib.jun} number of tributary junctions
-  (\code{head.h2o} - 1); \code{AREASQKM} drainage area (km^2);
-  \code{LENGTHKM} total lenght of network flowlines; \code{drain.den}
-  drainage density (\code{LENGTHKM} / \code{AREASQKM}); \code{WS.ord}
-  strahler order for root node; \code{reach.cnt} number of valley segments
-  (edges); \code{diver.cnt} count of divergent flow paths
+\code{data.frame}: \code{$group.comid} stream network root COMID;
+  \code{$vpu} NHDPlusV2 vector processing unit;\code{M} Position of sampling
+  point on COMID, as proportion of COMID from upstream end; \code{WS.ord}
+  strahler order for root node;\code{$head.h2o} number of headwater reaches;
+  \code{$trib.jun} number of tributary junctions; \code{reach.cnt} number of
+  reaches in network; \code{diver.cnt} count of divergent flow paths;
+  \code{$AREASQKM} drainage area (km^2); \code{$LENGTHKM} total lenght of
+  network flowlines (km); \code{drain.den} drainage density (\code{LENGTHKM}
+  / \code{AREASQKM})
 }
 \description{
-Calculates metrics related to stream network topology see \code{Value}
+Calculates stream network topology metrics
 }
 \details{
 Requires /NHDPlusAttributes directory (see \code{\link{net_nhdplus}})
 
-Warning: "Check drain.dia. Incomplete headwater path 5848788 at COMID 5848656
-in network 5848066 perhaps due to waterbody" may indicate that
-drain.dia is flawed by the presence of a waterbody in the network
+Length and area measures are scaled by M values
 }
 \examples{
-g <- net_calc(netdelin = c, vpu = "01", nhdplus_path = getwd())
-
+# identify NHDPlusV2 COMID
+a <- net_sample(nhdplus_path = getwd(), vpu = "01", ws_order = 6, n = 5)
+# delineate stream network
+b <- net_delin(group_comid = as.character(a[,"COMID"]), nhdplus_path = getwd(), vpu = "01")
+calculate topology summary
+c <- net_calc(netdelin = b, vpu = "01", nhdplus_path = getwd())
 }

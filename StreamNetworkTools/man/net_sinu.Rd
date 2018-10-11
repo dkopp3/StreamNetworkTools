@@ -2,36 +2,44 @@
 % Please edit documentation in R/net_sinu.r
 \name{net_sinu}
 \alias{net_sinu}
-\title{Reach Slope and Sinuosity}
+\title{Sinuosity and Slope}
 \usage{
 net_sinu(netdelin, nhdplus_path, vpu)
 }
 \arguments{
 \item{netdelin}{output from \code{net_delin}}
 
-\item{nhdplus_path}{directory containing NHDPlusV2 \code{\link{net_nhdplus}}}
+\item{nhdplus_path}{Directory containing NHDPlusV2 \code{\link{net_nhdplus}}}
 
-\item{vpu}{vector processing unit}
+\item{vpu}{NHDPlusV2 vector processing unit}
 }
 \value{
-\code{data.frame} with \code{group.comid} as network identifier;
-  \code{net.comid} as the reach identifier; \code{seg.id} as the valley
-  segment identifier; \code{tot.len} is the total length of reach;
-  \code{str.len} is straight line lenght between begining and end of reach;
-  \code{sinuosity} \code{tot.len} / \code{str.len}; \code{MaxElevSM} maximum
-  elevation of reach; \code{MinElevSM} minimum elevtion of reach;
+\code{data.frame}: \code{$net.comid} upstream reaches from
+  group.comid; \code{$group.comid} network root COMID; \code{$tot.len} length
+  of reach; \code{$str.len} is straight line length of reach;
+  \code{$sinuosity} \code{tot.len} / \code{str.len}; \code{$MaxElevSM}
+  maximum elevation of reach; \code{$MinElevSM} minimum elevtion of reach;
   \code{SlopeNHDPlus} slope of reach
 }
 \description{
-Calculates sinuosity and slope for each network COMID
+Calculates sinuosity and slope for each reach within a NHDPlusV2 network
 }
 \details{
-network scale values (i.e. mean) can be derived with \code{aggregate}
+Can \code{aggregate(...)} reach values to network-scale using group by
+\code{$net.id}
+
+\code{$MaxElevSM, $MinElevSM $SlopeNHDPlus} are values at the outlet of
+group.comid. \code{tot.len, str.len, sinuosity} are scaled by M value
 
 warning message: In st_cast.sf(netdelin_Prj, "LINESTRING") : repeating
 attributes for all sub-geometries for which they may not be constant is from
-vpu 17 when changing MULTILINE to LINESTRING geometry
+changing MULTILINE to LINESTRING geometry
 }
 \examples{
-j<-net_sinu(netdelin = c, vpu = "01", nhdplus_path = getwd())
+# identify NHDPlusV2 COMID
+a <- net_sample(nhdplus_path = getwd(), vpu = "01", ws_order = 6, n = 5)
+# delineate stream network
+b <- net_delin(group_comid = as.character(a[,"COMID"]), nhdplus_path = getwd(), vpu = "01")
+# calculate sinuosity and slope
+c <- net_sinu(netdelin = b, vpu = "01", nhdplus_path = getwd())
 }

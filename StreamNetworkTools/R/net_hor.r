@@ -1,33 +1,32 @@
-#' Network Area, Length and Bifurcation Ratios
+#' Horton Laws
 #'
-#' Uses \code{lm(...)} to estimates number, length and area ratios from the
-#' respected mean values a stream network (i.e. Horton Laws).
+#' calculates network area, length and bifurcation ratios, using (\code{lm(...)})
 #'
 #' requires /NHDPlusAttributes directory (see \code{net_nhdplus})
 #'
-#' Horton estimates are rounded down to the next lowest WS order (i.e. \code{ohm}
-#' is the strahler order of the (network - 1)) because a given sampling COMID,
-#' my not be representative of the whole stream order.
-#'
-#' Divergences are not included
-#'
-#' Check output for stream orders not exceeding order of group.comid. In some
-#' networks Error in NHDPlus vaa \code{STREAMORDE} can effect calculations.
+#' Horton estimates (\code{$Horton_est}) include network - 1 (i.e \code{$ohm})
+#' because a given group.comid, may not include the whole stream order
 #'
 #' @param netdelin output from \code{net_delin}
 #' @param vpu vector processing unit
-#' @param nhdplus_path directory containing NHDPlusV2 \code{\link{net_nhdplus}}
+#' @param nhdplus_path Directory for NHDPlusV2 files (\code{\link{net_nhdplus}}
 #'
-#' @return named \code{list}: \code{$topology} is \code{data.frame} with count
-#'   of stream numbers (\code{str_num}), mean of stream lengths (\code{str_len})
-#'   and mean of drainage areas (\code{str_area}); and \code{$Horton_Est} are
-#'   horotn estimates \code{Rb,Rl,Ra} (bifurcation, lenght and area ratio,
-#'   respectively). \code{Rb.rsqr, Rl.rsqr, Ra.rsqr} are R^2 values for the
-#'   \code{lm(...)} model. \code{ohm} is the strahler order of the (network -
-#'   1) (see \code{Details}.
+#' @return named \code{list}: \code{$topology} is data used to estimate horton
+#'   laws: \code{$group.comid} root COMID for steam network; \code{$str_ord}
+#'   stream order; \code{$str_num} count of stream reaches,\code{str_len} Mean
+#'   reach length; \code{str_area} mean drainage area. \code{$horton_est} are
+#'   estimated horotn ratios: \code{ohm} is the strahler order of the network -
+#'   1 (see \code{Details}. \code{$Rb,$Rl,$Ra} are bifurcation, length and area
+#'   ratios, respectively. \code{Rb.r2, Rl.r2, Ra.r2} are R^2 values from
+#'   \code{lm(...)}.
 #'
 #' @examples
-#' net_hort(netdelin = c, vpu = "01", nhdplus_path = getwd())
+#' # identify NHDPlusV2 COMID
+#' a <- net_sample(nhdplus_path = getwd(), vpu = "01", ws_order = 6, n = 5)
+#' # delineate stream network
+#' b <- net_delin(group_comid = as.character(a[,"COMID"]), nhdplus_path = getwd(), vpu = "01")
+#' #estimate horton ratios
+#' c <- net_hort(netdelin = b, vpu = "01", nhdplus_path = getwd())
 #' @export
 
 net_hort<-function (netdelin, vpu, nhdplus_path){
@@ -46,7 +45,7 @@ net_hort<-function (netdelin, vpu, nhdplus_path){
   #M measures and net.id become unnecessary.
   #the focal ohm is the group comid - 1.
   if(any(duplicated(netdelin$Network[, c("group.comid", "net.comid")]))){
-    warning ("FYI droping M and net.id values, COMID is indexes network")
+    warning ("FYI droping M and net.id values, group.comid is indexes network")
   }
 
   full.net <- unique(netdelin$Network[,c("group.comid", "net.comid", "vpu")])
@@ -207,15 +206,17 @@ net_hort<-function (netdelin, vpu, nhdplus_path){
           }
   }
 
+  names(hor.laws)[1] <- "group.comid"
   data.out <- list(topology = data[,c("group.comid","str_ord", "str_num", "str_len", "str_area")],
                    Horton_est = hor.laws)
+
   warn <- merge(warn_mess[,c("net.comid","STREAMORDE")],
                 hor.laws[,c("COMID","ohm")],
                 by.x = "net.comid", by.y = "COMID")
 
   if (any(warn[,"STREAMORDE"]-1 != warn[,"ohm"])){
     id<-as.character(warn[warn[,"STREAMORDE"]-1 != warn[,"ohm"], "net.comid"])
-    warning(paste("group.comid", id, "estimates may be inaccurate due to NHDPlus vaa STREAMORDER"))
+    warning(paste("group.comid", id, "estimates may be inaccurate due to NHDPlusV2 vaa STREAMORDER"))
   }
 
   return(data.out)

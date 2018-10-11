@@ -1,5 +1,5 @@
 Package: StreamNetworkTools
-Title: Chracterizing Topology and Planform Geometry of NHDPlusV2 Stream Networks 
+Title: Characterizing Topology and Planform Geometry of NHDPlusV2 Stream Networks 
 Version: 1.0.0.000
 Authors@R: person("Darin", "Kopp", email = "darinkopp@gmail.com", role = c("aut", "cre"))
 Description: An R package to derive covariates from the NHDPlusV2 dataset and faciliate continental scale analyses of river networks.
