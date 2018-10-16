@@ -65,24 +65,15 @@ net_nhdplus <- function (nhdplus_path = getwd(),
       url <- "http://www.horizon-systems.com/NHDPlus/V2NLCD2011.php"
       url2 <- RCurl::getURL(url)
       parsed <- XML::htmlParse(url2)
-      link <- XML::xpathSApply(parsed,
-                               path = "//a",
-                               XML::xmlGetAttr,
-                               "href")
-    link <- unlist(link)
-    link <- grep(download,
-                  link,
-                  value = T)
-    link <- grep(paste(vpu,"_VPUAttributeExtensionNLCD",sep=""),
-                  link,
-                  value = T)
-    filename <- unlist(strsplit(link, "/"))
-    zip_name <- paste(nhdplus_path, "/",
-                      filename[length(filename)],
-                      sep = "")
-    utils::download.file(link,
-                          zip_name,
-                          mode = "wb")
+      link <- XML::xpathSApply(parsed, path = "//a", XML::xmlGetAttr, "href")
+      link <- unlist(link)
+      link <- grep(download, link, value = T)
+      link <- grep(paste(vpu,"_VPUAttributeExtensionNLCD",sep=""),
+                  link,value = T)
+      filename <- unlist(strsplit(link, "/"))
+      zip_name <- paste(nhdplus_path, "/", filename[length(filename)], sep = "")
+      utils::download.file(link, zip_name, mode = "wb")
+
     setwd(zip_7)
     system(paste("7z x", paste("-o", nhdplus_path, sep=""),
                  zip_name, sep = " "))
@@ -93,29 +84,20 @@ net_nhdplus <- function (nhdplus_path = getwd(),
                vpu, ".php", sep = "")
   url2 <- RCurl::getURL(url)
   parsed <- XML::htmlParse(url2)
-  links <- XML::xpathSApply(parsed,
-                            path = "//a",
-                            XML::xmlGetAttr,
-                            "href")
+  links <- XML::xpathSApply(parsed, path = "//a", XML::xmlGetAttr, "href")
   links <- unlist(links)
-  links <- grep(download,
-                links,
-                value = T)
-#nested for loop bc some files (e.g. raster processing units have mutiple files)
+  links <- grep(download, links, value = T)
+
+  #nested for loop bc some files (e.g. raster processing units have mutiple files)
   for (f in files){
     download_files <- grep(f, links, value = T)
     for (download_file in download_files){
       filename <- unlist(strsplit(download_file, "/"))
       #mode "wb" is not default but specifies binary
-      zip_name <- paste(nhdplus_path, "/",
-                        filename[length(filename)],
-                        sep = "")
-      utils:::download.file(download_file,
-                            zip_name,
-                            mode = "wb")
+      zip_name <- paste(nhdplus_path, "/", filename[length(filename)], sep = "")
+      utils:::download.file(download_file, zip_name, mode = "wb")
       setwd(zip_7)
-      system(paste("7z x", paste("-o", nhdplus_path, sep=""),
-                   zip_name, sep = " "))
+      system(paste("7z x", paste("-o", nhdplus_path, sep=""), zip_name, sep = " "))
     }
   }
   #reset wd
