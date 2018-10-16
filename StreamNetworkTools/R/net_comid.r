@@ -37,15 +37,22 @@
 #' @export
 #'
 net_comid <- function(sample_points, CRS, nhdplus_path, vpu, maxdist){
+
+  if(!is.character(vpu)){
+    stop("vpu must be character")
+  }
+
   dir.spatial <- grep(paste(vpu, "/NHDSnapshot/Hydrography", sep = ""),
                       list.dirs(nhdplus_path, full.names = T),
                       value = T)
   if(length(dir.spatial)==0){
     stop(paste("check NHDSnapshot subdirectory"))
   }
+
   if(names(sample_points)[1] != "SITE_ID" | names(sample_points)[2] != "X" | names(sample_points)[3] != "Y"){
-    stop(paste("check sample_points names"))
+    stop(paste("Name sample points SITE_ID, X, Y"))
   }
+
   NHDFlowline <- sf::st_read(dir.spatial, layer = "NHDFlowline")
   NHDFlowline <- sf::st_transform(NHDFlowline, crs = (5070))
   NHDFlowline <- sf::st_zm(NHDFlowline, drop = T, what = "ZM")
@@ -148,52 +155,66 @@ net_comid <- function(sample_points, CRS, nhdplus_path, vpu, maxdist){
     rownames(dist) <- p$id
     snap_dist <- apply(dist, 1, min)
 
-    snap_vert <- sf::st_coordinates(lp[which(as.numeric(dist[1, ]) ==
-                                               as.numeric(snap_dist)), ])
+    snap_vert <- sf::st_coordinates(lp[which(as.numeric(dist[1, ]) == as.numeric(snap_dist)), ])
     colnames(snap_vert) <- c("snap_X", "snap_Y")
-    snap_vert<-snap_vert[1,]
-    COMID_GNIS <- l[l[, "X"] == snap_vert["snap_X"] &
-                      l[,"Y"] == snap_vert["snap_Y"],
-                    c("COMID", "GNIS_NAME")]
-    COMID_GNIS <- COMID_GNIS[1,]
-    #match with VAA HERE
-    DA <- vaa[vaa[,"COMID"]==COMID_GNIS[,"COMID"],c("TOTDASQKM","STREAMORDE")]
 
-    snap_vert <- sf::st_transform(lp[which(as.numeric(dist[1, ]) ==
-                                             as.numeric(snap_dist)), ],
-                                  crs = CRS)
+    snap_vert <- snap_vert[1, ]
+    COMID_GNIS <- l[l[, "X"] == snap_vert["snap_X"] & l[, "Y"] == snap_vert["snap_Y"], c("COMID", "GNIS_NAME")]
+
+    COMID_GNIS <- COMID_GNIS[1, ]
+    #match with VAA HERE
+    DA <- vaa[vaa[,"COMID"] == COMID_GNIS[, "COMID"], c("TOTDASQKM", "STREAMORDE")]
+
+    snap_vert <- sf::st_transform(lp[which(as.numeric(dist[1, ]) == as.numeric(snap_dist)), ], crs = CRS)
+    #sf::write_sf(snap_vert, "C:/Users/Darin/Dropbox/Dissertation/Chapter_3_Distance_Deposition/RobertsData/test_5.shp")
+
     snap_vert <- sf::st_coordinates(snap_vert)
     colnames(snap_vert) <- c("snap_X", "snap_Y")
-    snap_vert <- data.frame(snap_x = snap_vert[1,1],
-                            snap_y = snap_vert[1,2])
+    snap_vert <- data.frame(snap_x = snap_vert[1,1], snap_y = snap_vert[1,2])
+
     SITE_ID <- as.character(p$id)
     orig_xy <- sf::st_transform(p, CRS)
     orig_xy <- sf::st_coordinates(orig_xy)
     vpu <- vpu
 
     #M #find comid. Make new line from
+    totline <- sf::st_coordinates(NHDFlowline[NHDFlowline$COMID == COMID_GNIS[, "COMID"], c("COMID", "GNIS_NAME")])
 
-    totline <- sf::st_coordinates(NHDFlowline[NHDFlowline$COMID == COMID_GNIS[,"COMID"],c("COMID", "GNIS_NAME")])
     #same as vertex above w/ no transformation snap_vert
-    sv <- sf::st_coordinates(lp[which(as.numeric(dist[1, ]) ==
-               as.numeric(snap_dist)), ])
+    sv <- sf::st_coordinates(lp[which(as.numeric(dist[1, ]) == as.numeric(snap_dist)), ])
     #thich vertex matches snaped points
-    ppts <- which(totline[,"X"] == sv[1,1]&totline[,"Y"] == sv[1,2])
+
+    ppts <- which(totline[,"X"] == sv[1, 1] & totline[,"Y"] == sv[1, 2])
+
+    #vertices - if the buffer (search radius intessects line and does not include an existing vertex)
+    #will produce a new coordinate that needs to be added to added to totline
+    if(length(ppts) == 0){#insert vertex... after closest vertex
+      #calc distance between snappped vertex and totline vertecies
+      asew <- sf::st_distance(sf::st_point(sv), sf::st_as_sf(data.frame(totline), coords = c("X","Y")))
+      #vertex closes to new point
+      minx <- which.min(asew)
+      #insert vertex w/ribin
+      totline <- rbind(totline[c(1:minx),c(1,2)], sv)
+      rownames(totline)<-NULL
+      ppts <- which(totline[,"X"] == sv[1, 1] & totline[,"Y"] == sv[1, 2])
+    }
+    #means the closest vertex is upstream end of comid.
+    #include next downstream comid in vertex
+    if(ppts == 1){
+      ppts <- 2
+      warning(paste("SITE_ID", i,":nearest vertex is at upstream end of comid, moved next downstream"))
+    }
+
     #the line from snapped vertex to upstream confluence/headwater
     line_length <- sf::st_length(sf::st_sfc(sf::st_linestring(apply(totline[c(1:ppts),c(1:2)], 2, as.numeric)),
                                             crs = 5070))
-    #total comid line length
-    tot_length <- sf::st_length(sf::st_sfc(sf::st_linestring(apply(totline[,c(1:2)], 2, as.numeric)),
-                                crs = 5070))
+
+    #total comid line length #nee
+    tot_length <- sf::st_length(NHDFlowline[NHDFlowline$COMID == COMID_GNIS[, "COMID"], c("COMID", "GNIS_NAME")])
+
     M <- as.numeric(line_length/tot_length)
-    temp <- data.frame(snap_dist,
-                       snap_vert,
-                       M,
-                       SITE_ID,
-                       orig_xy,
-                       vpu,
-                       COMID_GNIS,
-                       DA,
+    temp <- data.frame(snap_dist, snap_vert, M, SITE_ID,
+                       orig_xy, vpu, COMID_GNIS, DA,
                        row.names = NULL)
     out <- rbind(temp, out)
   }

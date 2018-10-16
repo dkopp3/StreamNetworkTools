@@ -8,6 +8,8 @@ library("devtools")
 # install_git("https://github.com/dkopp3/StreamNetworkTools_git.git", subdir = "StreamNetworkTools")
 library(StreamNetworkTools)
 
+#OR download the
+
 #check SNT package help for avaialble functions
 help(package ="StreamNetworkTools")
 
