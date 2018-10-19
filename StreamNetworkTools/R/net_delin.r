@@ -115,7 +115,6 @@ net_delin <- function (group_comid, nhdplus_path = getwd(), vpu, M = NULL, snap_
 
   #check for nested COMID's and display warning()
   q <- aggregate(network[,"net.comid"], by = list(network[,"net.comid"]), length)
-  head(q)
   w <- unique(network[network[,"net.comid"] %in% q[q[, "x"] > 2, "Group.1"], ])
   alarm <- NULL#list()
   if(length(w[,1]) > 0){

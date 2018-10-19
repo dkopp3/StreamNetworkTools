@@ -163,7 +163,13 @@ net_comid <- function(sample_points, CRS, nhdplus_path, vpu, maxdist){
 
     COMID_GNIS <- COMID_GNIS[1, ]
     #match with VAA HERE
+    #drainage density no matching...
     DA <- vaa[vaa[,"COMID"] == COMID_GNIS[, "COMID"], c("TOTDASQKM", "STREAMORDE")]
+
+    if(length(DA[,1]) == 0){
+      DA<-data.frame(TOTDASQKM = NA,  STREAMORDE = NA)
+      warning(paste(COMID,"no matching vaa?"))
+    }
 
     snap_vert <- sf::st_transform(lp[which(as.numeric(dist[1, ]) == as.numeric(snap_dist)), ], crs = CRS)
     #sf::write_sf(snap_vert, "C:/Users/Darin/Dropbox/Dissertation/Chapter_3_Distance_Deposition/RobertsData/test_5.shp")
@@ -212,7 +218,7 @@ net_comid <- function(sample_points, CRS, nhdplus_path, vpu, maxdist){
     #total comid line length #nee
     tot_length <- sf::st_length(NHDFlowline[NHDFlowline$COMID == COMID_GNIS[, "COMID"], c("COMID", "GNIS_NAME")])
 
-    M <- as.numeric(line_length/tot_length)
+    M <- as.numeric(line_length / tot_length)
     temp <- data.frame(snap_dist, snap_vert, M, SITE_ID,
                        orig_xy, vpu, COMID_GNIS, DA,
                        row.names = NULL)
