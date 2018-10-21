@@ -45,6 +45,7 @@ net_comid <- function(sample_points, CRS, nhdplus_path, vpu, maxdist){
   dir.spatial <- grep(paste(vpu, "/NHDSnapshot/Hydrography", sep = ""),
                       list.dirs(nhdplus_path, full.names = T),
                       value = T)
+
   if(length(dir.spatial)==0){
     stop(paste("check NHDSnapshot subdirectory"))
   }
@@ -53,7 +54,7 @@ net_comid <- function(sample_points, CRS, nhdplus_path, vpu, maxdist){
     stop(paste("Name sample points SITE_ID, X, Y"))
   }
 
-  NHDFlowline <- sf::st_read(dir.spatial, layer = "NHDFlowline")
+  NHDFlowline <- sf::st_read(dir.spatial, layer = "NHDFlowline", quiet = T)
   NHDFlowline <- sf::st_transform(NHDFlowline, crs = (5070))
   NHDFlowline <- sf::st_zm(NHDFlowline, drop = T, what = "ZM")
   geom <- sf::st_geometry(NHDFlowline)
@@ -74,33 +75,30 @@ net_comid <- function(sample_points, CRS, nhdplus_path, vpu, maxdist){
   sample_points <- sf::st_transform(sample_points, crs = 5070)
 
   #search Radius around each point
+
   rad <- sf::st_buffer(sample_points, dist = maxdist)
+  #supresses warning message from intersection.
+  #assumes attributes are constant throughout the geometries
+  sf::st_agr(rad) = "constant"
+  sf::st_agr(NHDFlowline) = "constant"
   int <- sf::st_intersection(rad, NHDFlowline)
 
   sites <- as.character(unique(int$SITE_ID))
-  out <- data.frame(SITE_ID = character(),
-                    X = numeric(),
-                    Y = numeric(),
-                    M = numeric(),
-                    snap_dist = numeric(),
-                    snap_x = numeric(),
-                    snap_y = numeric(),
-                    COMID = character(),
-                    GNIS_NAME = character(),
-                    vpu = character(),
-                    TOTDASQKM = numeric(),
-                    STREAMORDE = numeric())
+  out <- data.frame(SITE_ID = character(), X = numeric(), Y = numeric(),
+                    M = numeric(), snap_dist = numeric(),
+                    snap_x = numeric(), snap_y = numeric(),
+                    COMID = character(), GNIS_NAME = character(),
+                    vpu = character(), TOTDASQKM = numeric(),
+                    STREAMORDE = numeric(), COMMENTS = character())
   #each site
   for (i in sites){
     #identify point for site i, and create sf object
-    p <- sf::st_sfc(sf::st_point(sf::st_coordinates(sample_points[sample_points$SITE_ID == i, ])),
-                    crs = 5070)
+    p <- sf::st_sfc(sf::st_point(sf::st_coordinates(sample_points[sample_points$SITE_ID == i, ])), crs = 5070)
     geom <- sf::st_geometry(p)
     p <- sf::st_sf(geom, data.frame(id = as.character(i)))
 
     #identify which comid's are in search radius
-    comids <- int[int$SITE_ID == i,
-                  c("COMID", "GNIS_NAME")]
+    comids <- int[int$SITE_ID == i, c("COMID", "GNIS_NAME")]
     sf::st_geometry(comids) <- NULL
     if (length(comids[,1]) > 1){ #iterate through possible comids to find closest
       count <- 1
@@ -162,13 +160,16 @@ net_comid <- function(sample_points, CRS, nhdplus_path, vpu, maxdist){
     COMID_GNIS <- l[l[, "X"] == snap_vert["snap_X"] & l[, "Y"] == snap_vert["snap_Y"], c("COMID", "GNIS_NAME")]
 
     COMID_GNIS <- COMID_GNIS[1, ]
+    COMMENTS <- NA
+
     #match with VAA HERE
     #drainage density no matching...
     DA <- vaa[vaa[,"COMID"] == COMID_GNIS[, "COMID"], c("TOTDASQKM", "STREAMORDE")]
 
+    #consider adding in comments section.
     if(length(DA[,1]) == 0){
       DA<-data.frame(TOTDASQKM = NA,  STREAMORDE = NA)
-      warning(paste(COMID,"no matching vaa?"))
+      COMMENTS <- "Point on Isolated Network (No VAA)"
     }
 
     snap_vert <- sf::st_transform(lp[which(as.numeric(dist[1, ]) == as.numeric(snap_dist)), ], crs = CRS)
@@ -194,7 +195,7 @@ net_comid <- function(sample_points, CRS, nhdplus_path, vpu, maxdist){
 
     #vertices - if the buffer (search radius intessects line and does not include an existing vertex)
     #will produce a new coordinate that needs to be added to added to totline
-    if(length(ppts) == 0){#insert vertex... after closest vertex
+    if(length(ppts) == 0){ #insert vertex... after closest vertex
       #calc distance between snappped vertex and totline vertecies
       asew <- sf::st_distance(sf::st_point(sv), sf::st_as_sf(data.frame(totline), coords = c("X","Y")))
       #vertex closes to new point
@@ -203,12 +204,21 @@ net_comid <- function(sample_points, CRS, nhdplus_path, vpu, maxdist){
       totline <- rbind(totline[c(1:minx),c(1,2)], sv)
       rownames(totline)<-NULL
       ppts <- which(totline[,"X"] == sv[1, 1] & totline[,"Y"] == sv[1, 2])
+      if(!is.na(COMMENTS)){
+        COMMENTS <- paste(COMMENTS,"Created New Vertex", sep = "; ")
+      } else {
+      COMMENTS <- "Created New Vertex"
+      }
     }
     #means the closest vertex is upstream end of comid.
     #include next downstream comid in vertex
     if(ppts == 1){
       ppts <- 2
-      warning(paste("SITE_ID", i,":nearest vertex is at upstream end of comid, moved next downstream"))
+      if(!is.na(COMMENTS)){
+        COMMENTS <- paste(COMMENTS,"Moved to Vertex Downstream of COMID Start", sep = "; ")
+      } else {
+      COMMENTS <- "Moved to Vertex Downstream of COMID Start"
+      }
     }
 
     #the line from snapped vertex to upstream confluence/headwater
@@ -216,42 +226,31 @@ net_comid <- function(sample_points, CRS, nhdplus_path, vpu, maxdist){
                                             crs = 5070))
 
     #total comid line length #nee
-    tot_length <- sf::st_length(NHDFlowline[NHDFlowline$COMID == COMID_GNIS[, "COMID"], c("COMID", "GNIS_NAME")])
-
+    tot_length <- sf::st_length(NHDFlowline[NHDFlowline$COMID == COMID_GNIS[, "COMID"],
+                                            c("COMID", "GNIS_NAME")])
     M <- as.numeric(line_length / tot_length)
     temp <- data.frame(snap_dist, snap_vert, M, SITE_ID,
-                       orig_xy, vpu, COMID_GNIS, DA,
+                       orig_xy, vpu, COMID_GNIS, DA, COMMENTS,
                        row.names = NULL)
     out <- rbind(temp, out)
   }
+#unmatched points
+  um <- sample_points[sample_points$SITE_ID %in% out[,"SITE_ID"] == F, ]
 
-  um <- sample_points[sample_points$SITE_ID%in%out[,"SITE_ID"]==F,]
-  if(length(um$SITE_ID) > 0){
-    xy <- sf::st_coordinates(um)
-    sf::st_geometry(um) <- NULL
-    out[,"SITE_ID"] <- as.character(out[,"SITE_ID"])
-    out <- rbind(out, data.frame(SITE_ID = um$SITE_ID, xy,
-                                 snap_dist = NA,
-                                 M = NA,
-                                 snap_x = NA,
-                                 snap_y = NA,
-                                 vpu = NA,
-                                 COMID = NA,
-                                 GNIS_NAME = NA,
-                                 TOTDASQKM = NA,
-                                 STREAMORDE = NA))
+    if(length(um$SITE_ID) > 0){
+      xy <- sf::st_transform(um, CRS)
+      xy <- sf::st_coordinates(xy)
+      sf::st_geometry(um) <- NULL
+      out[,"SITE_ID"] <- as.character(out[,"SITE_ID"])
+      out <- rbind(out, data.frame(SITE_ID = um$SITE_ID, xy, snap_dist = NA, M = NA,
+                                   snap_x = NA, snap_y = NA, vpu = NA, COMID = NA,
+                                   GNIS_NAME = NA, TOTDASQKM = NA, STREAMORDE = NA,
+                                   COMMENTS = "Unmatched to COMID"))
   }
-
-  out<-out[, c("SITE_ID", "X", "Y",
-               "snap_dist", "snap_x", "snap_y","M",
-               "COMID", "GNIS_NAME", "vpu",
-               "TOTDASQKM","STREAMORDE")]
-  names(out)<-c("SITE_ID", "X", "Y",
-                "snap_dist", "snap_x", "snap_y","M",
-                "COMID", "GNIS_NAME", "vpu",
-                "ApproxTOTDASQKM","STREAMORDE")
+  out <- out[, c("SITE_ID", "X", "Y", "snap_dist", "snap_x", "snap_y","M",
+                 "COMID", "GNIS_NAME", "vpu", "TOTDASQKM","STREAMORDE", "COMMENTS")]
+  names(out) <- c("SITE_ID", "X", "Y", "snap_dist", "snap_x", "snap_y","M",
+                "COMID", "GNIS_NAME", "vpu", "ApproxTOTDASQKM","STREAMORDE", "COMMENTS")
   return(out)
-
 }
-
 
