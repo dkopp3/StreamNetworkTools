@@ -148,6 +148,11 @@ net_comid <- function(sample_points, CRS, nhdplus_path, vpu, maxdist){
         lp <- rbind(temp, lp)
       }
     }
+
+    #if(as.character(p$id)==1838){
+     # stop(as.character(p$id))
+    #}
+
     dist <- sf::st_distance(p, lp)
     colnames(dist) <- paste(lp$id, c(1:length(lp$id)), sep = "_")
     rownames(dist) <- p$id
@@ -157,7 +162,8 @@ net_comid <- function(sample_points, CRS, nhdplus_path, vpu, maxdist){
     colnames(snap_vert) <- c("snap_X", "snap_Y")
 
     snap_vert <- snap_vert[1, ]
-    COMID_GNIS <- l[l[, "X"] == snap_vert["snap_X"] & l[, "Y"] == snap_vert["snap_Y"], c("COMID", "GNIS_NAME")]
+    COMID_GNIS <- l[l[, "X"] == snap_vert["snap_X"] & l[, "Y"] == snap_vert["snap_Y"],
+                    c("COMID", "GNIS_NAME")]
 
     COMID_GNIS <- COMID_GNIS[1, ]
     COMMENTS <- NA
@@ -198,18 +204,53 @@ net_comid <- function(sample_points, CRS, nhdplus_path, vpu, maxdist){
     if(length(ppts) == 0){ #insert vertex... after closest vertex
       #calc distance between snappped vertex and totline vertecies
       asew <- sf::st_distance(sf::st_point(sv), sf::st_as_sf(data.frame(totline), coords = c("X","Y")))
-      #vertex closes to new point
+      #vertex closes to new point index
       minx <- which.min(asew)
-      #insert vertex w/ribin
-      totline <- rbind(totline[c(1:minx),c(1,2)], sv)
-      rownames(totline)<-NULL
-      ppts <- which(totline[,"X"] == sv[1, 1] & totline[,"Y"] == sv[1, 2])
-      if(!is.na(COMMENTS)){
-        COMMENTS <- paste(COMMENTS,"Created New Vertex", sep = "; ")
-      } else {
-      COMMENTS <- "Created New Vertex"
-      }
+      #if the closest point is the most down stream vertex of flowline
+      #put new point before end of the line
+      if(minx == dim(totline)[1]){
+        totline <- rbind(totline[c(1:minx-1),c(1,2)], sv)
+        rownames(totline) <- NULL
+        ppts <- which(totline[,"X"] == sv[1, 1] & totline[,"Y"] == sv[1, 2])
+        } else if (minx == 1){# if closest point is most upstream, append to end of line
+          totline <- rbind(totline[c(1:minx), c(1,2)], sv)
+          rownames(totline) <- NULL
+          ppts <- dim(totline)[1]
+
+        } else {#compare the slope upstream and down stream vertices
+          focal <- totline[minx,c(1,2)]
+          upstr <- totline[minx-1, c(1,2)]
+          dwnstr <- totline[minx+1, c(1,2)]
+          slope_us <- (focal[2] - upstr[2]) / (focal[1] - upstr[1])
+          # these values are in meters... you are discussing sub meter measuresments
+          # change this to format numbers
+          slope_ds <- as.numeric(format((focal[2] - dwnstr[2]), digits = 10))/
+            as.numeric(format((focal[1] - dwnstr[1]), digits = 10))
+          slope_new <- as.numeric(format((focal[2] - sv[2]), digits = 10))/
+            as.numeric(format((focal[1] - sv[1]), digits = 10))
+
+          if(format(slope_us, digits = 7) == format(slope_new, digits = 7)){
+            #put point upstream of minx
+            totline <- rbind(totline[c(1:minx-1), c(1,2)], sv, totline[minx, c(1, 2)])
+            rownames(totline) <- NULL
+            ppts <- dim(totline)[1]
+          } else if (format(slope_ds, digits = 7) == format(slope_new, digits = 7)){
+            #put point down stream
+            totline <- rbind(totline[c(1:minx), c(1,2)], sv)
+            rownames(totline) <- NULL
+            ppts <- which(totline[,"X"] == sv[1, 1] & totline[,"Y"] == sv[1, 2])
+          } else {
+            stop(paste("new slope doesnt match to 7 digits! WTF: SITE_ID =", SITE_ID))
+          }
+        }
+          if(!is.na(COMMENTS)){#updata COmments field
+            COMMENTS <- paste(COMMENTS,"Created New Vertex", sep = "; ")
+            } else {
+              COMMENTS <- "Created New Vertex"
+            }
     }
+
+
     #means the closest vertex is upstream end of comid.
     #include next downstream comid in vertex
     if(ppts == 1){
@@ -220,10 +261,10 @@ net_comid <- function(sample_points, CRS, nhdplus_path, vpu, maxdist){
       COMMENTS <- "Moved to Vertex Downstream of COMID Start"
       }
     }
-
     #the line from snapped vertex to upstream confluence/headwater
-    line_length <- sf::st_length(sf::st_sfc(sf::st_linestring(apply(totline[c(1:ppts),c(1:2)], 2, as.numeric)),
-                                            crs = 5070))
+    line_length <- sf::st_length(sf::st_sfc(
+      sf::st_linestring(apply(totline[c(1:ppts), c(1:2)], 2,
+                              as.numeric)), crs = 5070))
 
     #total comid line length #nee
     tot_length <- sf::st_length(NHDFlowline[NHDFlowline$COMID == COMID_GNIS[, "COMID"],
@@ -234,7 +275,9 @@ net_comid <- function(sample_points, CRS, nhdplus_path, vpu, maxdist){
                        row.names = NULL)
     out <- rbind(temp, out)
   }
-#unmatched points
+
+
+  #unmatched points
   um <- sample_points[sample_points$SITE_ID %in% out[,"SITE_ID"] == F, ]
 
     if(length(um$SITE_ID) > 0){

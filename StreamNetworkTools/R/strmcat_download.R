@@ -21,13 +21,13 @@
 #' @return StreamCat data files are downloaded to "StreamCat" directory
 #'
 #' @examples
-#' net_strmcat(strmcat_path = getwd(), Class = c("Disturbance"), Scale =
+#' strmcat_download(strmcat_path = getwd(), Class = c("Disturbance"), Scale =
 #' c("Watershed", "Riparian", "Stream segment"), Metric.Type =
 #' c("Infrastructure"), vpu = "01")
 #'
 #' @export
 
-net_strmcat <- function (strmcat_path = getwd(),
+strmcat_download <- function (strmcat_path = getwd(),
                          Class = c("Disturbance", "Natural"),
                          Scale = c("Watershed", "Riparian", "Stream segment"),
                          Metric.Type =  c("Agriculture","Bio","Climate",
@@ -43,7 +43,6 @@ net_strmcat <- function (strmcat_path = getwd(),
   }
 
   # set as internal data devtools::use_data(x, internal = TRUE, overwrite = T)
-  #strmcatxwalk <- read.csv("C:/Users/Darin/Dropbox/Dissertation/Chapter_2_StreamNetworkTools/StreamNetworkTools_git/Example_Data/StreamCat_xwalk.csv")
   strmcatxwalk <- StreamNetworkTools:::strmcatxwalk2
 
   class <- strmcatxwalk[as.character(strmcatxwalk[, "Class"]) %in% Class, ]
@@ -98,6 +97,7 @@ net_strmcat <- function (strmcat_path = getwd(),
     warning(paste("Metric.Type = c(\"", Metric.Type[Metric.Type %in% metric.type[, "Metric.Type"] == F],
                   "\") unavailable give selection", sep = ""))
   }
+
 #create strmcat subdirectory
   strmcat.dir <- paste(strmcat_path, "/StreamCat", sep="")
   if(dir.exists(strmcat.dir)==F){
