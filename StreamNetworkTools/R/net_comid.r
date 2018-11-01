@@ -218,29 +218,51 @@ net_comid <- function(sample_points, CRS, nhdplus_path, vpu, maxdist){
           ppts <- dim(totline)[1]
 
         } else {#compare the slope upstream and down stream vertices
+
           focal <- totline[minx,c(1,2)]
           upstr <- totline[minx-1, c(1,2)]
           dwnstr <- totline[minx+1, c(1,2)]
           slope_us <- (focal[2] - upstr[2]) / (focal[1] - upstr[1])
+
+          slope_ds <- (focal[2] - dwnstr[2]) / (focal[1] - dwnstr[1])
+          slope_new <- (focal[2] - sv[2]) / (focal[1] - sv[1])
           # these values are in meters... you are discussing sub meter measuresments
           # change this to format numbers
-          slope_ds <- as.numeric(format((focal[2] - dwnstr[2]), digits = 10))/
-            as.numeric(format((focal[1] - dwnstr[1]), digits = 10))
-          slope_new <- as.numeric(format((focal[2] - sv[2]), digits = 10))/
-            as.numeric(format((focal[1] - sv[1]), digits = 10))
+          #below ws format numbers as == use if throws another
+          #slope_ds <- as.numeric(format((focal[2] - dwnstr[2]), digits = 10))/
+           # as.numeric(format((focal[1] - dwnstr[1]), digits = 10))
+          #slope_new <- as.numeric(format((focal[2] - sv[2]), digits = 10))/
+           # as.numeric(format((focal[1] - sv[1]), digits = 1))
 
-          if(format(slope_us, digits = 7) == format(slope_new, digits = 7)){
+          if(isTRUE(all.equal(slope_us, slope_new))){
             #put point upstream of minx
             totline <- rbind(totline[c(1:minx-1), c(1,2)], sv, totline[minx, c(1, 2)])
             rownames(totline) <- NULL
             ppts <- dim(totline)[1]
-          } else if (format(slope_ds, digits = 7) == format(slope_new, digits = 7)){
+
+          } else if (isTRUE(all.equal(slope_ds, slope_new))){
             #put point down stream
             totline <- rbind(totline[c(1:minx), c(1,2)], sv)
             rownames(totline) <- NULL
             ppts <- which(totline[,"X"] == sv[1, 1] & totline[,"Y"] == sv[1, 2])
+
           } else {
-            stop(paste("new slope doesnt match to 7 digits! WTF: SITE_ID =", SITE_ID))
+            #when all else fails, put the point at min difference
+            usds <- which.min(data.frame(abs(abs(slope_ds) - abs(slope_new)),
+                                         abs(abs(slope_us) - abs(slope_new))))
+            if(usds == 1){
+              #put point down stream
+              totline <- rbind(totline[c(1:minx), c(1,2)], sv)
+              rownames(totline) <- NULL
+              ppts <- which(totline[,"X"] == sv[1, 1] & totline[,"Y"] == sv[1, 2])
+            } else {
+              #put point upstream of minx
+              totline <- rbind(totline[c(1:minx-1), c(1,2)], sv, totline[minx, c(1, 2)])
+              rownames(totline) <- NULL
+              ppts <- dim(totline)[1]
+              }
+            }
+
           }
         }
           if(!is.na(COMMENTS)){#updata COmments field
@@ -248,17 +270,15 @@ net_comid <- function(sample_points, CRS, nhdplus_path, vpu, maxdist){
             } else {
               COMMENTS <- "Created New Vertex"
             }
-    }
-
 
     #means the closest vertex is upstream end of comid.
-    #include next downstream comid in vertex
+    #include next downstream vertex
     if(ppts == 1){
       ppts <- 2
       if(!is.na(COMMENTS)){
-        COMMENTS <- paste(COMMENTS,"Moved to Vertex Downstream of COMID Start", sep = "; ")
+        COMMENTS <- paste(COMMENTS,"Moved to closest Vertex Downstream of COMID Start", sep = "; ")
       } else {
-      COMMENTS <- "Moved to Vertex Downstream of COMID Start"
+      COMMENTS <- "Moved to closest Vertex Downstream of COMID Start"
       }
     }
     #the line from snapped vertex to upstream confluence/headwater
