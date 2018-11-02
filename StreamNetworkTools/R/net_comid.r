@@ -62,6 +62,7 @@ net_comid <- function(sample_points, CRS, nhdplus_path, vpu, maxdist){
   names(NHDFlowline) <- toupper(names(NHDFlowline))
   NHDFlowline <- sf::st_sf(NHDFlowline,geom=geom)
 
+
   directory <- grep(paste(vpu, "/NHDPlusAttributes", sep = ""),
                     list.dirs(nhdplus_path, full.names = T),
                     value = T)
@@ -75,7 +76,9 @@ net_comid <- function(sample_points, CRS, nhdplus_path, vpu, maxdist){
   sample_points <- sf::st_transform(sample_points, crs = 5070)
 
   #search Radius around each point
-
+  #Consider adding while statement here
+  #can save 40sec by not reading in file every time
+  #that will be version 1.1 :)
   rad <- sf::st_buffer(sample_points, dist = maxdist)
   #supresses warning message from intersection.
   #assumes attributes are constant throughout the geometries
@@ -92,6 +95,7 @@ net_comid <- function(sample_points, CRS, nhdplus_path, vpu, maxdist){
                     STREAMORDE = numeric(), COMMENTS = character())
   #each site
   for (i in sites){
+    #i<-sites[2]
     #identify point for site i, and create sf object
     p <- sf::st_sfc(sf::st_point(sf::st_coordinates(sample_points[sample_points$SITE_ID == i, ])), crs = 5070)
     geom <- sf::st_geometry(p)
@@ -149,10 +153,6 @@ net_comid <- function(sample_points, CRS, nhdplus_path, vpu, maxdist){
       }
     }
 
-    #if(as.character(p$id)==1838){
-     # stop(as.character(p$id))
-    #}
-
     dist <- sf::st_distance(p, lp)
     colnames(dist) <- paste(lp$id, c(1:length(lp$id)), sep = "_")
     rownames(dist) <- p$id
@@ -209,7 +209,7 @@ net_comid <- function(sample_points, CRS, nhdplus_path, vpu, maxdist){
       #if the closest point is the most down stream vertex of flowline
       #put new point before end of the line
       if(minx == dim(totline)[1]){
-        totline <- rbind(totline[c(1:minx-1),c(1,2)], sv)
+        totline <- rbind(totline[c(1:minx-1), c(1,2)], sv)
         rownames(totline) <- NULL
         ppts <- which(totline[,"X"] == sv[1, 1] & totline[,"Y"] == sv[1, 2])
         } else if (minx == 1){# if closest point is most upstream, append to end of line
@@ -219,7 +219,7 @@ net_comid <- function(sample_points, CRS, nhdplus_path, vpu, maxdist){
 
         } else {#compare the slope upstream and down stream vertices
 
-          focal <- totline[minx,c(1,2)]
+          focal <- totline[minx, c(1,2)]
           upstr <- totline[minx-1, c(1,2)]
           dwnstr <- totline[minx+1, c(1,2)]
           slope_us <- (focal[2] - upstr[2]) / (focal[1] - upstr[1])
@@ -236,7 +236,7 @@ net_comid <- function(sample_points, CRS, nhdplus_path, vpu, maxdist){
 
           if(isTRUE(all.equal(slope_us, slope_new))){
             #put point upstream of minx
-            totline <- rbind(totline[c(1:minx-1), c(1,2)], sv, totline[minx, c(1, 2)])
+            totline <- rbind(totline[c(1:minx-1), c(1,2)], sv)
             rownames(totline) <- NULL
             ppts <- dim(totline)[1]
 
@@ -257,7 +257,7 @@ net_comid <- function(sample_points, CRS, nhdplus_path, vpu, maxdist){
               ppts <- which(totline[,"X"] == sv[1, 1] & totline[,"Y"] == sv[1, 2])
             } else {
               #put point upstream of minx
-              totline <- rbind(totline[c(1:minx-1), c(1,2)], sv, totline[minx, c(1, 2)])
+              totline <- rbind(totline[c(1:minx-1), c(1,2)], sv, totline[minx:dim(totline)[1], c(1, 2)])
               rownames(totline) <- NULL
               ppts <- dim(totline)[1]
               }
@@ -296,6 +296,7 @@ net_comid <- function(sample_points, CRS, nhdplus_path, vpu, maxdist){
     out <- rbind(temp, out)
   }
 
+  head(out)
 
   #unmatched points
   um <- sample_points[sample_points$SITE_ID %in% out[,"SITE_ID"] == F, ]
