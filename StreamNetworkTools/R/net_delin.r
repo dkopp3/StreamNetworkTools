@@ -64,10 +64,14 @@ net_delin <- function (group_comid, nhdplus_path = getwd(), vpu, M = NULL, snap_
       stop("length(M)!=length(group_comid)")
     }
 
-  if (any(duplicated(data.frame(group_comid,Ms)))) {
-    warning(paste("duplicated comid:", group_comid[duplicated(group_comid)],
-                  "single removed", sep = " "))
-    group_comid <- unique(group_comid)
+  if (any(duplicated(data.frame(group_comid, Ms)))) {
+    warning(paste("duplicated group comid's detected. Try
+                  group_comid[duplicated(data.frame(group_comid, M))].
+                  processing unique(data.frame(group_comid, M)])"))
+    temp <- unique(data.frame(group_comid, Ms))
+    group_comid<- as.character(temp[ ,"group_comid"])
+    Ms <- temp[,"Ms"]
+    length(Ms)
   }
 
   directory <- grep(paste(vpu, "/NHDPlusAttributes", sep = ""),
@@ -93,8 +97,22 @@ net_delin <- function (group_comid, nhdplus_path = getwd(), vpu, M = NULL, snap_
   names(NHDFlowline)[1] <- toupper(names(NHDFlowline)[1])
   network <- data.frame(group.comid = character(), net.comid = character(),
                         vpu = character(), M = numeric (), net.id = character())
+
+  #remove any coastal or shoreline comid's
+  coastal <- merge(vaa, data.frame(group_comid, Ms),by.x = "COMID", by.y = "group_comid")
+  if(length(coastal[coastal[,"FCODE"] == 56600, ]) > 0|
+     length(coastal[coastal[,"FCODE"] == 56700, ]) > 0){
+    warning("removed coastal and/or shorline comids")
+    temp <- coastal[coastal[,"FCODE"] != 56600 & coastal[,"FCODE"] != 56700, c("COMID", "Ms")]
+    group_comid <- temp[,"COMID"]
+    Ms <- temp[,"Ms"]
+  }
+  print(paste("processing", length(group_comid), "networks"))
   #nested<-NULL
   #delineate network for each group COMID
+
+
+
   for (i in 1:length(group_comid)) {
     net <- group_comid[i]
     fcomid <- group_comid[i]
@@ -110,6 +128,7 @@ net_delin <- function (group_comid, nhdplus_path = getwd(), vpu, M = NULL, snap_
     network <- rbind(network, data.frame(group.comid = group.comid,
                                 net.comid = net.comid,
                                 vpu = vpu, M = M, net.id = i))
+    #print(i)
   }
 
   #check for nested COMID's
@@ -126,37 +145,15 @@ net_delin <- function (group_comid, nhdplus_path = getwd(), vpu, M = NULL, snap_
   names(z) <- c("root_group.comid","upstream_net.comid")
   alarm <- z
 
-  count <- 0
-  for (p in group_comid){
+  #produce shapefile (sf object)
+  save.shp <- merge(NHDFlowline, network, by.x = "COMID", by.y = "net.comid")
 
-    count <- count + 1
-
-    if (count == 1) {
-      save.shp <- NHDFlowline[NHDFlowline$COMID %in%
-                              network[network[,"group.comid"] == p, "net.comid"], "COMID"]
-      save.shp$group.comid <- p
-      save.shp$VPUID <- vpu
-      save.shp$Meas <- 1
-      save.shp$net.id <- count
-
-    } else {
-      temp <- NHDFlowline[NHDFlowline$COMID %in%
-                            network[network[, "group.comid"] == p, "net.comid"],
-                          "COMID"]
-      temp$group.comid <- p
-      temp$VPUID <- vpu
-      temp$Meas <- 1
-      temp$net.id <- count
-
-      save.shp <- rbind(save.shp, temp)
-    }
-
-  }
   out <- list(Network = network,
               Nested_COMIDs = alarm,
               SF_Obj = save.shp)
   return(out)
 }
+
 #-----------------------------------------------------
 #' Identify Network Segments (Deprecated)
 #'
