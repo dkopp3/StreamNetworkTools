@@ -112,15 +112,13 @@ net_delin <- function (group_comid, nhdplus_path = getwd(), vpu, M = NULL, snap_
   #delineate network for each group COMID
 
   for (i in 1:length(group_comid)) {
-    strt<-Sys.time()
+    #strt<-Sys.time()
     net <- group_comid[i]
     fcomid <- group_comid[i]
-    while (length(flow[flow[, "TOCOMID"] %in% fcomid, "FROMCOMID"]) >= 1 & all(!is.na(net))) {
+    while (length(flow[flow[, "TOCOMID"] %in% fcomid, "FROMCOMID"]) >= 1&all(!is.na(net))) {
       fcomid <- flow[flow[, "TOCOMID"] %in% fcomid, "FROMCOMID"]
       fcomid <- fcomid[fcomid != 0]
       net <- append(fcomid, net, length(net))
-      unique(vaa[vaa[,"COMID"]%in%net, "FCODE"])
-      unique(vaa[,c("VPUIN","VPUOUT")])
       #mississippi river causing problems networks over 100,000 line features are given NA
       if(length(net) > 100000){net <- NA}
     }
@@ -132,8 +130,7 @@ net_delin <- function (group_comid, nhdplus_path = getwd(), vpu, M = NULL, snap_
     network <- rbind(network, data.frame(group.comid = group.comid,
                                 net.comid = net.comid,
                                 vpu = vpu, M = M, net.id = i))
-    ends <- Sys.time()
-    if(i %% 10 == 0){print(paste(i, ends - strt))}
+    #if(i%%10==0){print(Sys.time()-strt)}
   }
 
   #check for nested COMID's
