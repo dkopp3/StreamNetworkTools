@@ -31,6 +31,10 @@
 
 net_hort<-function (netdelin, vpu, nhdplus_path){
 
+  if(!is.character(vpu)){
+    stop("vpu must be character")
+  }
+
   directory<-grep(paste(vpu,"/NHDPlusAttributes",sep=""),
                   list.dirs(nhdplus_path,full.names=T),
                   value = T)
@@ -45,14 +49,12 @@ net_hort<-function (netdelin, vpu, nhdplus_path){
   #M measures and net.id become unnecessary.
   #the focal ohm is the group comid - 1.
   if(any(duplicated(netdelin$Network[, c("group.comid", "net.comid")]))){
-    warning ("FYI droping M and net.id values, group.comid is indexes network")
+    warning ("FYI droping M and net.id values, group.comid is network index")
   }
 
   full.net <- unique(netdelin$Network[,c("group.comid", "net.comid", "vpu")])
 
-  vaa <- merge(full.net, vaa,
-               by.x = "net.comid",
-               by.y = "COMID")
+  vaa <- merge(full.net, vaa, by.x = "net.comid", by.y = "COMID")
 
   warn_mess <- vaa[as.character(vaa[ ,"group.comid"]) ==
                      as.character(vaa[ ,"net.comid"]),
@@ -210,13 +212,15 @@ net_hort<-function (netdelin, vpu, nhdplus_path){
   data.out <- list(topology = data[,c("group.comid","str_ord", "str_num", "str_len", "str_area")],
                    Horton_est = hor.laws)
 
+
   warn <- merge(warn_mess[,c("net.comid","STREAMORDE")],
-                hor.laws[,c("COMID","ohm")],
-                by.x = "net.comid", by.y = "COMID")
+                hor.laws[,c("group.comid","ohm")],
+                by.x = "net.comid", by.y = "group.comid")
 
   if (any(warn[,"STREAMORDE"]-1 != warn[,"ohm"])){
+    #this is caused by incorrect stream order in network
     id<-as.character(warn[warn[,"STREAMORDE"]-1 != warn[,"ohm"], "net.comid"])
-    warning(paste("group.comid", id, "estimates may be inaccurate due to NHDPlusV2 vaa STREAMORDER"))
+    warning(paste("group.comid", id, "estimates may be inaccurate due to incorrect NHDPlusV2 vaa STREAMORDER"))
   }
 
   return(data.out)
