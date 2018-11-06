@@ -31,11 +31,12 @@
 #' c <- net_flow(netdelin = b, vpu = "01", nhdplus_path = getwd())
 #'@export
 
-net_flow <- function (nhdplus_path, vpu, netdelin){
+net_flow <- function (nhdplus_path, vpu, netdelin, Mscale = "N"){
   directory <- grep(paste(vpu, "/NHDPlusAttributes", sep = ""),
                     list.dirs(nhdplus_path, full.names = T), value = T)
     full.net <- netdelin$Network
     data.out <- as.data.frame(unique(full.net[,c("net.id", "group.comid", "vpu")]))
+
     clim.dir <- grep(paste(vpu, "/VPUAttributeExtension", sep = ""),
                    list.dirs(nhdplus_path, full.names = T),
                    value = T)
@@ -89,6 +90,11 @@ net_flow <- function (nhdplus_path, vpu, netdelin){
 
   erom_dat <- read_EROM_files(erom)
 
+  #add option to scale by proportion of flow line
+  if (Mscale == "N"){
+    erom_dat[,"M"] <- 1
+  }
+
 #discharge values aggregated as sum of incremental
 cumtot <- erom_dat[as.character(erom_dat[ ,"net.comid"]) == as.character(erom_dat[ ,"group.comid"]),
                    c("net.id", "group.comid", "M", "month", "Q0001E", "QINCR0001E")]
@@ -120,7 +126,7 @@ cumtotv <- erom_dat[as.character(erom_dat[ ,"net.comid"]) == as.character(erom_d
                   c("net.id", "group.comid", "M", "month", "V0001E")]
 
 MAV <- cumtotv[cumtotv[,"month"]=="MA",c("net.id","V0001E")]
-names(MA) <- c("net.id", "MAV0001E")
+names(MAV) <- c("net.id", "MAV0001E")
 minVMM <- aggregate(cumtotv[cumtotv[,"month"] != "MA",("V0001E")],
                    by = list(cumtotv[cumtotv[,"month"] != "MA","net.id"]), min)
 names(minVMM) <- c("net.id","minMMV0001E")
@@ -132,19 +138,15 @@ covVMM <- aggregate(cumtotv[cumtotv[,"month"] != "MA",("V0001E")],
                    function (x) mean(x)/sd(x))
 names(covVMM) <- c("net.id", "covMMV0001E")
 
-
 data.out <- Reduce(function(x, y)
   merge(x, y, by = "net.id", all.x = T),
   list(data.out, MAV, minVMM, maxVMM, covVMM))
-#dropped vogel method
-#vogel.dir <- grep(paste(vpu, "/VogelExtension", sep = ""),
- #                 list.dirs(nhdplus_path, full.names = T),
-  #                value = T)
-
-#vogel <- list.files(vogel.dir[1], full.names = T)
-#vogel.flow <- foreign::read.dbf(vogel)
-#names(vogel.flow) <- toupper(names(vogel.flow))
-#vogel.flow <- vogel.flow[vogel.flow[, "COMID"] %in% levels(full.net[, "group.comid"]),
- #                        c("COMID","MAFLOWV","MAVELV")]
-
+names(data.out)
+if(any(data.out[,"MAV0001E"] < -99)){
+   data.out[data.out[,"MAV0001E"]< -99, grep("V0001E",names(data.out))]<- -9999
+}
+if (any(data.out[,"MAQ0001E"]> -99)){
+  data.out[data.out[,"MAQ0001E"]< -99, grep("Q0001E",names(data.out))]<- -9999
+}
+return(data.out)
 }

@@ -47,7 +47,7 @@
 #'
 #' @export
 
-net_clim<-function(nhdplus_path, vpu, netdelin){
+net_clim<-function(nhdplus_path, vpu, netdelin, Mscale = "N"){
   directory <- grep(paste(vpu, "/NHDPlusAttributes", sep = ""),
                     list.dirs(nhdplus_path, full.names = T),
                     value = T)
@@ -60,6 +60,12 @@ net_clim<-function(nhdplus_path, vpu, netdelin){
   full.net <- netdelin$Network
   full.net <- merge(full.net, vaa[,c("COMID","AREASQKM")],
                     by.x = "net.comid", by.y = "COMID")
+
+  #if M scale is N, set all M values to 1 so no scale
+  if(Mscale = "N"){
+    full.net[,"M"] <- 1
+  }
+
 
   clim.dir <- grep(paste(vpu, "/VPUAttributeExtension", sep = ""),
                    list.dirs(nhdplus_path, full.names = T),
