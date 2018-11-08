@@ -62,7 +62,7 @@ net_clim<-function(nhdplus_path, vpu, netdelin, Mscale = "N"){
                     by.x = "net.comid", by.y = "COMID")
 
   #if M scale is N, set all M values to 1 so no scale
-  if(Mscale = "N"){
+  if(Mscale == "N"){
     full.net[,"M"] <- 1
   }
 
