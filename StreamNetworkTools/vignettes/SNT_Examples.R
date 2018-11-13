@@ -11,13 +11,21 @@ library(StreamNetworkTools)
 #OR download the
 
 #check SNT package help for avaialble functions
-help(package ="StreamNetworkTools")
+help(package = "StreamNetworkTools")
 
 # to begin download NHDPlusV2 data for Vector Processing Unit (VPU) of interest
 # here we are using VPU 11 which includes Arkansas, Red and White River basins
 # check function documentation for further details
 # setwd to example folder - where NHDPlusV2 data will be downloaded
 setwd("C:/Users/Darin/Dropbox/Dissertation/Chapter_2_StreamNetworkTools/StreamNetworkTools_git/Example_Data")
+install.packages("devtools")
+library(devtools)
+
+help(packages = "StreamNetworkTools")
+ls(StreamNetworkTools)
+getwd()
+?check_dep_version()
+devtools:: build()
 
 # net_nhdplus
 # can download all available data for vpu but sppecified only files needed to run streamNetworkTools
