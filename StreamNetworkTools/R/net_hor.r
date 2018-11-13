@@ -62,6 +62,7 @@ net_hort<-function (netdelin, vpu, nhdplus_path){
 
   #remove diveregences
   vaa <- vaa[vaa[,"STREAMORDE"] == vaa[, "STREAMCALC"], ]
+  names(vaa)
 
   data<-data.frame(group.comid = character(), str_ord = integer(),
                    str_num = integer(), srt_len = numeric(),
@@ -76,24 +77,26 @@ net_hort<-function (netdelin, vpu, nhdplus_path){
     a <- vaa[vaa[,"group.comid"] == q,
              c("group.comid", "net.comid",
                "STREAMORDE", "LEVELPATHI",
-               "TONODE", "FROMNODE",
-               "LENGTHKM", "AREASQKM")]
+               "TONODE", "FROMNODE","HYDROSEQ",
+               "TOTDASQKM", "LENGTHKM", "AREASQKM")]
 
   for (p in unique(a[,"STREAMORDE"])){
+    #p<-1
+    # z is a list of each flowline of a given order stream order w/ From - To path
     z <- a[a[,"STREAMORDE"] == p, ]
     z <- split(z,list(z[,"LEVELPATHI"],as.character(z[,"group.comid"])))
     TOO <- lapply(z,"[[","TONODE")
     FRO <- lapply(z,"[[","FROMNODE")
 
     for (i in length(z):1){
-      #i<-68
+      #i<-1
       #with element i, compare tonode to all fromnodes not i
       #upsrt connection
-      TOO_ULi<-unlist(TOO[i], use.names=F)
-      FRO_UL<-unlist(FRO[-i],use.names = F)
-      TOO_ULi <- TOO_ULi[TOO_ULi%in%FRO_UL]
+      TOO_ULi <- unlist(TOO[i], use.names=F)
+      FRO_UL <- unlist(FRO[-i], use.names = F)
+      TOO_ULi <- TOO_ULi[TOO_ULi %in% FRO_UL]
 
-      if(length(TOO_ULi)>0){
+      if(length(TOO_ULi) > 0){
         TOO_ULi<-sapply(lapply(z,"[[",c("FROMNODE")), function(x) x %in% TOO_ULi)
       if(length(dim(TOO_ULi))>0){
         TOO_ULi<-apply(TOO_ULi,2,function(x) any(x))
@@ -123,6 +126,7 @@ net_hort<-function (netdelin, vpu, nhdplus_path){
 
     z <- setNames(do.call(rbind.data.frame, z), names(z[[1]]))
     z <- split(z, list(z[, "LEVELPATHI"], as.character(z[, "group.comid"])))
+
     #spply aggregares list element
     #naming w/comid
     L <- sapply(lapply(z, "[","LENGTHKM"), sum)
@@ -131,7 +135,8 @@ net_hort<-function (netdelin, vpu, nhdplus_path){
     L <- aggregate(L[,"L"],by = list(group.comid = L[,"group.comid"]), mean)
     names(L)[2] <- "str_len"
 
-    A <- sapply(lapply(z,"[[","AREASQKM"), sum)
+    #A <- sapply(lapply(z, "[[", "AREASQKM"), sum)
+    A <-  sapply(lapply(z, "[[", "TOTDASQKM"), max)
     group.comid <- unlist(lapply(strsplit(names(A), "\\."), "[[", 2))
     A <- data.frame(group.comid = group.comid, A = A, row.names = NULL)
     A <- aggregate(A[,"A"], by = list(group.comid = A[, "group.comid"]), mean)
@@ -209,6 +214,7 @@ net_hort<-function (netdelin, vpu, nhdplus_path){
   }
 
   names(hor.laws)[1] <- "group.comid"
+
   data.out <- list(topology = data[,c("group.comid","str_ord", "str_num", "str_len", "str_area")],
                    Horton_est = hor.laws)
 
