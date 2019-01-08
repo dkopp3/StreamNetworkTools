@@ -141,9 +141,11 @@ names(covVMM) <- c("net.id", "covMMV0001E")
 data.out <- Reduce(function(x, y)
   merge(x, y, by = "net.id", all.x = T),
   list(data.out, MAV, minVMM, maxVMM, covVMM))
-names(data.out)
+
+data.out <- data.out[complete.cases(data.out),]
+
 if(any(data.out[,"MAV0001E"] < -99)){
-   data.out[data.out[,"MAV0001E"]< -99, grep("V0001E",names(data.out))]<- -9999
+  data.out[data.out[,"MAV0001E"]< -99, grep("V0001E",names(data.out))]<- -9999
 }
 if (any(data.out[,"MAQ0001E"]> -99)){
   data.out[data.out[,"MAQ0001E"]< -99, grep("Q0001E",names(data.out))]<- -9999

@@ -4,7 +4,7 @@
 \alias{net_clim}
 \title{Network Climate Metrics}
 \usage{
-net_clim(nhdplus_path, vpu, netdelin)
+net_clim(nhdplus_path, vpu, netdelin, Mscale = "N")
 }
 \arguments{
 \item{nhdplus_path}{Directory for NHDPlusV2 files (\code{\link{net_nhdplus}})}

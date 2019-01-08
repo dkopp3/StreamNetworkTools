@@ -24,8 +24,8 @@ library(devtools)
 help(packages = "StreamNetworkTools")
 ls(StreamNetworkTools)
 getwd()
-?check_dep_version()
-devtools:: build()
+devtools::build()
+
 
 # net_nhdplus
 # can download all available data for vpu but sppecified only files needed to run streamNetworkTools

@@ -4,7 +4,7 @@
 \alias{net_flow}
 \title{Network Discharge and Veolcity Summary}
 \usage{
-net_flow(nhdplus_path, vpu, netdelin)
+net_flow(nhdplus_path, vpu, netdelin, Mscale = "N")
 }
 \arguments{
 \item{nhdplus_path}{Directory for NHDPlusV2 files (\code{\link{net_nhdplus}})}

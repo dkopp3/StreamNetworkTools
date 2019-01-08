@@ -100,8 +100,8 @@ net_delin <- function (group_comid, nhdplus_path = getwd(), vpu, M = NULL, snap_
 
   #remove any coastal or shoreline comid's
   coastal <- merge(vaa, data.frame(group_comid, Ms),by.x = "COMID", by.y = "group_comid")
-  if(length(coastal[coastal[,"FCODE"] == 56600, ]) > 0|
-     length(coastal[coastal[,"FCODE"] == 56700, ]) > 0){
+  if(length(coastal[coastal[,"FCODE"] == 56600, 1]) > 0|
+     length(coastal[coastal[,"FCODE"] == 56700, 1]) > 0){
     warning("removed coastal and/or shorline comids")
     temp <- coastal[coastal[,"FCODE"] != 56600 & coastal[,"FCODE"] != 56700, c("COMID", "Ms")]
     group_comid <- temp[,"COMID"]
@@ -115,12 +115,15 @@ net_delin <- function (group_comid, nhdplus_path = getwd(), vpu, M = NULL, snap_
     #strt<-Sys.time()
     net <- group_comid[i]
     fcomid <- group_comid[i]
-    while (length(flow[flow[, "TOCOMID"] %in% fcomid, "FROMCOMID"]) >= 1&all(!is.na(net))) {
+    while (length(flow[flow[, "TOCOMID"] %in% fcomid, "FROMCOMID"]) >= 1 & all(!is.na(net))) {
       fcomid <- flow[flow[, "TOCOMID"] %in% fcomid, "FROMCOMID"]
       fcomid <- fcomid[fcomid != 0]
       net <- append(fcomid, net, length(net))
       #mississippi river causing problems networks over 100,000 line features are given NA
-      if(length(net) > 100000){net <- NA}
+      if(length(net) > 2000000){
+        net <- NA
+      warning(paste0(group_comid[i], ">2000000"))
+      }
     }
 
     group.comid <- group_comid[i]
@@ -154,7 +157,9 @@ net_delin <- function (group_comid, nhdplus_path = getwd(), vpu, M = NULL, snap_
               Nested_COMIDs = alarm,
               SF_Obj = save.shp)
   return(out)
-}
+  #getwd()
+sf::write_sf(out$SF_Obj,"testuconn.shp")
+  }
 
 #-----------------------------------------------------
 #' Identify Network Segments (Deprecated)

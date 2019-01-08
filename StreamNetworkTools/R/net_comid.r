@@ -97,7 +97,11 @@ net_comid <- function(sample_points, CRS, nhdplus_path, vpu, maxdist){
   for (i in sites){
     #i<-sites[2]
     #identify point for site i, and create sf object
-    p <- sf::st_sfc(sf::st_point(sf::st_coordinates(sample_points[sample_points$SITE_ID == i, ])), crs = 5070)
+    if(dim(sf::st_coordinates(sample_points[sample_points$SITE_ID == i, ]))[1]>1){
+      stop(paste("duplicated SITE_ID", i))
+    }
+    p <- sf::st_sfc(sf::st_point(sf::st_coordinates(sample_points[sample_points$SITE_ID == i, ])),
+                    crs = 5070)
     geom <- sf::st_geometry(p)
     p <- sf::st_sf(geom, data.frame(id = as.character(i)))
 
