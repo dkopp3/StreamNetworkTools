@@ -58,17 +58,18 @@ net_conflu <- function (netdelin, nhdplus_path, vpu){
 
   t_angle <- data.frame(net.id = numeric(), group.comid = character(),
                         trib_comid = character(), vpu = character(),
-                        X = numeric(), Y = numeric(), CRS = numeric(), alpha = numeric(),
+                        X = numeric(), Y = numeric(), alpha = numeric(),
                         area_ratio = numeric(), StreamOrde = numeric(), trib_area = numeric(),
                         junction_num = numeric(), complex = numeric())
 
-    for(i in unique(net[, "net.id"])){
+  for(i in unique(net[, "net.id"])){
     #iterate for each network
+    #i<-63
     z <- net[net[, "net.id"] == i, ]
     #remove divergences
     z <- z[z[, "STREAMORDE"] == z[, "STREAMCALC"], ]
     grpid <- unique(z[,"group.comid"])
-    print(paste("processing confluences for group.comid", grpid))
+    #print(paste("processing confluences for group.comid", grpid))
 
     for (j in z[,"net.comid"]){
       t <- flow[flow[, "TOCOMID"] == j, c("TOCOMID", "FROMCOMID")]
@@ -92,11 +93,19 @@ net_conflu <- function (netdelin, nhdplus_path, vpu){
         #juncion number is concatenate of two stream reach orders
         junction_num <- as.numeric(paste(t[order(t[, "STREAMORDE"]), "STREAMORDE"], collapse = ""))
         #coordinates
-        trib <- NHD[NHD$group.comid == grpid & NHD$COMID %in% t$FROMCOMID, ]
+        trib <- NHD[NHD$group.comid == grpid & NHD$net.id == i & NHD$COMID %in% t$FROMCOMID, ]
         coords <- sf::st_coordinates(trib)
         xy <- aggregate(coords[, c("X", "Y")], by = list(coords[, c("X")], coords[, c("Y")]), length)
         xy <- xy[xy[, "X"] > 1, c(1, 2)]
+
+        #transform xy back to nad83 for output
+        xy <- sf::st_sfc(sf::st_point(c(xy[1,1], xy[1,2])))
+        xy = sf::st_sf(geom = xy)
+        sf::st_crs(xy) = 102004
+        xy <- sf::st_transform(xy, crs = 4269)
+        xy <- sf::st_coordinates(xy)
         colnames(xy) <- c("X", "Y")
+
         x1 <- coords[coords[, "L1"] == 1, c(1)]
         y1 <- coords[coords[, "L1"] == 1, c(2)]
 
@@ -112,6 +121,7 @@ net_conflu <- function (netdelin, nhdplus_path, vpu){
         #repeats for sqcond trib
         x2 <- coords[coords[, "L1"] == 2, c(1)]
         y2 <- coords[coords[, "L1"] == 2, c(2)]
+
         v <- prcomp(cbind(x2, y2))$rotation
         beta2 <- v[2, 1] / v[1, 1]
         y_int2 <- mean(y2) - beta2 * (mean(x2))
@@ -126,7 +136,7 @@ net_conflu <- function (netdelin, nhdplus_path, vpu){
         #angles in radians convert to degrees
         alpha <- (alpha * 180) / (pi)
         temp<-data.frame(net.id = i, group.comid = grpid,
-                         trib_comid = j, vpu = vpu, CRS = 102004,
+                         trib_comid = j, vpu = vpu,
                          xy, trib_order, area_ratio, trib_area,
                          junction_num, alpha = alpha, complex = 0)
         t_angle <- rbind(t_angle, temp)
@@ -137,13 +147,22 @@ net_conflu <- function (netdelin, nhdplus_path, vpu){
           coords <- sf::st_coordinates(trib)
           xy <- aggregate(coords[,c("X","Y")], by = list(coords[,c("X")], coords[,c("Y")]), length)
           xy <- xy[xy[, "X"] > 1, c(1, 2)]
+
+          #transform xy back to nad83 for output
+          xy <- sf::st_sfc(sf::st_point(c(xy[1,1], xy[1,2])))
+          xy = sf::st_sf(geom = xy)
+          sf::st_crs(xy) = 102004
+          xy <- sf::st_transform(xy, crs = 4269)
+          xy <- sf::st_coordinates(xy)
           colnames(xy) <- c("X", "Y")
+
+
           junction_num <- as.numeric(paste(t[order(t[, "STREAMORDE"]), "STREAMORDE"], collapse = ""))
           temp <- data.frame(net.id = i, group.comid = grpid,
                              trib_comid = j, vpu = vpu,
                              xy, alpha = NA, area_ratio = NA,
                              trib_order = NA, trib_area = NA,
-                             junction_num, CRS = 102004,
+                             junction_num,
                              complex = length(t[ ,1]))
           t_angle <- rbind(t_angle, temp)
         }
@@ -152,6 +171,7 @@ net_conflu <- function (netdelin, nhdplus_path, vpu){
   return(t_angle)
 }
 
+#write.csv(t_angle,"C:/Users/Darin/Dropbox/Dissertation/StreamResiliencyRCN/Community_Group/Conflul_test.csv", row.names = F)
   #plotting example
   #plot(coords[,c(1,2)])
   #points(coords[coords[,"L1"]==2,c(1,2)], col="red")
@@ -159,4 +179,3 @@ net_conflu <- function (netdelin, nhdplus_path, vpu){
   #abline(a=y_int1,b = beta1)
   #abline(a=y_int2,b = beta2)
   #points(rbind(new_xy2_1,new_xy2_2),pch=3)
-

@@ -11,7 +11,8 @@
 #' @param nhdplus_path directory for NHDPlusV2 files
 #' @param vpu NHDPlusV2 vector Processing Unit
 #'
-#' @return named \code{list()} of distance matrix (sqKM).  Names are To/From comids with net.id appended
+#' @return named \code{list()} of distance matrix (sqKM).  Names are To/From
+#'   comids with net.id appended
 #'
 #' @examples
 #' #read example locations from VPU 11
@@ -44,7 +45,7 @@ net_posit <- function (netdelin, nhdplus_path, vpu){
                                               full.names = T), value = T)
   flow <- foreign::read.dbf(flow.files)
   #reduce the number of flow to prevent errors in navigation
-  flow <- flow[flow[,"TOCOMID"] %in% netdelin$Network[,"net.comid"],]
+  flow_all <- flow[flow[,"TOCOMID"] %in% netdelin$Network[,"net.comid"],]
   Vaa <- grep("PlusFlowlineVAA.dbf",
               list.files(directory[1], full.names=T),
               value = T)
@@ -57,14 +58,14 @@ net_posit <- function (netdelin, nhdplus_path, vpu){
   count <- 1
   out <- list()
 
-  #sf::write_sf(netdelin$SF_Obj, "C:/Users/Darin/Dropbox/Dissertation/StreamResiliencyRCN/Community_Group/path16test.shp")
 for (i in roots){
   #i <- 10390290
+  #adjuest flow table to only include root network
+  flow <- flow_all[flow_all[,"TOCOMID"] %in% netdelin$Network[netdelin$Network$group.comid==i,"net.comid"],]
   comids <- netdelin$Nested_COMIDs[netdelin$Nested_COMIDs$root_group.comid == i, ]
   #get M values here, the iterate through
   path_mvalues <- netdelin$Network[netdelin$Network[,"group.comid"] == netdelin$Network[,"net.comid"], ]
   path_mvalues <- path_mvalues[path_mvalues[,"group.comid"] %in% comids[,"upstream_net.comid"], ]
-
   path_mvalues$rowid <- apply(path_mvalues[,c("net.comid","net.id")], 1, paste, collapse = "_")
 
   #calcuate path to root for every comid
@@ -132,7 +133,7 @@ for (i in roots){
       }
   }
 
-  print("completed path Distance")
+  #print("completed path Distance")
   #make dist matrix here
   #add in M values for paths
   #check paths for multiple ID's
@@ -243,7 +244,7 @@ for (i in roots){
     }
   }
 
-  print("comleted dist matrix")
+  #print("comleted dist matrix")
   out[[count]]<-list(distmat)
   count <- count+1
 }
