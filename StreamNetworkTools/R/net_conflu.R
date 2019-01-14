@@ -49,7 +49,7 @@ net_conflu <- function (netdelin, nhdplus_path, vpu){
   names(vaa) <- toupper(names(vaa))
   flow <- foreign::read.dbf(flow.files)
   NHD <- sf::st_zm(netdelin$SF_Obj, drop = T, what = "ZM")
-
+  NHD <- sf::st_cast(NHD,"LINESTRING")
   #Lambert Conformal Cone - preserves angles as per seybold et al 2017
   NHD <- sf::st_transform(NHD, crs = 102004)
   net <- netdelin$Network
@@ -72,6 +72,7 @@ net_conflu <- function (netdelin, nhdplus_path, vpu){
     #print(paste("processing confluences for group.comid", grpid))
 
     for (j in z[,"net.comid"]){
+      #j<-22911954
       t <- flow[flow[, "TOCOMID"] == j, c("TOCOMID", "FROMCOMID")]
       #information about streams upstream of confluence junction
       t <- merge(t, z[,c("net.comid","STREAMORDE", "STREAMCALC", "STREAMLEVE", "TOTDASQKM")],
@@ -95,6 +96,7 @@ net_conflu <- function (netdelin, nhdplus_path, vpu){
         #coordinates
         trib <- NHD[NHD$group.comid == grpid & NHD$net.id == i & NHD$COMID %in% t$FROMCOMID, ]
         coords <- sf::st_coordinates(trib)
+
         xy <- aggregate(coords[, c("X", "Y")], by = list(coords[, c("X")], coords[, c("Y")]), length)
         xy <- xy[xy[, "X"] > 1, c(1, 2)]
 

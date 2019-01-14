@@ -65,6 +65,7 @@ conflu_dist <- function (netdelin, netconflu, nhdplus_path, vpu){
   dist$dist_km <- dist[,"LENGTHKM"] * dist[,"M"]
   conflu_dis <- merge(conflu_dis,dist[,c("net.id", "dist_km")], by.x = "net.id")
 
+  if(dim(samplepts)[1]>1){
   #dist(mvalueXlenght)
   for (i in 1:nrow(samplepts)){
     #return point information and confluence info (including distance)
@@ -151,15 +152,18 @@ conflu_dist <- function (netdelin, netconflu, nhdplus_path, vpu){
     #endtime <- Sys.time()
     #print(endtime - srt.time)
   }
-  #add values w/out confluences
+  }
+    #add values w/out confluences
 
   Noconflu <- unique(netdelin$Network[netdelin$Network[,c("net.id")] %in% conflu_dis[,"net.id"]==F,
                                       c("group.comid", "net.id","M","vpu")])
+  if(dim(Noconflu)[1] > 0){
   conflu_dis <- rbind(conflu_dis, data.frame (Noconflu, X = NA, Y = NA, trib_order = NA,
                                               area_ratio = NA, trib_area = NA,
                                               junction_num = NA, alpha = NA, complex = NA,
                                               trib_comid = NA, dist_km = NA  ))
-  names(conflu_dis)[grep(paste0("X","|","Y"),names(conflu_dis))]<-c("X_trib", "Y_trib")
+  }
+  names(conflu_dis)[grep(paste0("X","|","Y"), names(conflu_dis))]<-c("X_trib", "Y_trib")
 
 return(conflu_dis[order(conflu_dis[,"net.id"]),])
 }
