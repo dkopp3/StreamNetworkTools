@@ -3,10 +3,11 @@ Rpackage: StreamNetworkTools
 Darin Kopp | darinkopp@gmail.com 
 
 Abstract: 
-	Rivers and streams are among the most impacted ecosystems and several monitoring initiatives are currently underway be local national govenments… Rivers and streams are closely coupled with the terrestrial compartments and often features of the basin can predict instream dissect terrestrial drainage basinsBasin features can often be used to predict instream Linking monitoring efforts to a spatially explicit framework More fully understanding the spatial extent of impacted rivers requires a set of tools designed to Rivers and streams are among the most impacted ecosystems but more fully understanding the extent of these impacts requires a spatially explicit framework. Several monitoring efforts are currently underway to assess the Several monitoring initiatives are targeted as assessing the quality of our waterways.  NHDPlus provides a spatial framework to contextualize water quality problems.  We present a new R package designed to intecrate  National scale datasets. Monitoring locations. Covariates. Predictive models.  Watershed integritiy. Impared waters… R-package. We currently lack tools to facilitate large-scale analsysis of water monitoring efforts.
+	Understanding large scale processes in lotic ecosystems requires a requires a geospatial framework and set of tools designed characterize river networks. StreamNetworkTools uses the NHDPlusV2 dataset to delineate stream networks and characterize their physical and geomorphical attributes. 
 
-Purpose: an R package to derive covariates from NHDPlusV2 dataset and facilitate continental scale analyses of river networks and national scale monitoring efforts.  
+Purpose: an R package to derive covariates from NHDPlusV2 dataset and facilitate continental scale analyses of river networks.  
 Status: V1.0
+
 Data Requirements: 
 StreamNetworkTools works with NHDPlusV2.  Users should become familiar with NHDPlusV2 documentation (http://www.horizon-systems.com/NHDPlus/NHDPlusV2_documentation.php)
 
