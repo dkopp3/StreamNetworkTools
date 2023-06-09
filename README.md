@@ -1,4 +1,4 @@
-# StreamNetworkTools --- Updated and Assimiliated to MMASN package (https://github.com/dkopp3/MMASN). 
+# StreamNetworkTools has been updated and assimiliated into MMASN package (https://github.com/dkopp3/MMASN). 
 Rpackage: StreamNetworkTools 
 Darin Kopp | darinkopp@gmail.com 
 
